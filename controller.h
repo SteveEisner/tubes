@@ -108,7 +108,6 @@ class PatternController {
 
     currentState.bpm = this->beats->bpm;
     currentState.frame = this->beats->frame;
-    currentState.accum = this->beats->accum;
 
     if (this->patternTimer.ended()) {
       this->nextPattern();
@@ -268,7 +267,7 @@ class PatternController {
         Serial.println(" (obeying)");
   
         this->startPattern(state.pattern, state.palette_id, (SyncMode)state.sync);
-        this->beats->sync(state.bpm, state.frame, state.accum);
+        this->beats->sync(state.bpm, state.frame);
         currentState = state;    
         return;
     }

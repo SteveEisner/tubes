@@ -12,10 +12,12 @@ class BeatController {
     uint32_t frame = 0;
     uint32_t accum = 0;
 
+    uint32_t micros_per_frame;
+
   void setup()
   {
     globalTimer.setup();
-    this->sync(DEFAULT_BPM << 8, 0, 0);
+    this->sync(DEFAULT_BPM << 8, 0);
   }
 
   void update()
@@ -23,22 +25,25 @@ class BeatController {
     globalTimer.update();
     
     // Maintains an accumulator with 14 bits of precision
-    this->accum += (1145 * (this->bpm>>8) * globalTimer.delta_micros); // 8.388 << 14
-    while (this->accum >= (65536<<14)) {
+    this->accum += globalTimer.delta_micros << 8;  // 24:8 bitwise float
+    while (this->accum > this->micros_per_frame) {
       this->frame++;
-      this->accum -= (65536<<14);
+      this->accum -= this->micros_per_frame;
     }
-
   }
 
-  void sync(accum88 bpm, uint32_t frame, uint32_t accum) {
+  void sync(accum88 bpm, uint32_t frame) {
     this->bpm = bpm;
     this->frame = frame;
-    this->accum = accum;    
+    this->accum = 0;
+
+    float f = 61440000000.0 / (float)bpm;
+    Serial.println(f);
+    this->micros_per_frame = (uint32_t)f; // 24:8 bitwise float
   }
   
   void set_bpm(accum88 bpm) {
-    this->sync(bpm, this->frame, 0);
+    this->sync(bpm, 0/*this->frame*/);
   }
 };
 

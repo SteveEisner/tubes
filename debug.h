@@ -41,9 +41,10 @@ class DebugController {
 
   void update()
   {
-    if (this->controller->x_axis > 100)
+    if (this->controller->x_axis > 100) {
       this->debugging = 1;
-    else if (this->controller->x_axis < 30)
+      this->controller->beats->set_bpm(DEFAULT_BPM << 8);
+    } else if (this->controller->x_axis < 30)
       this->debugging = 0;
     
     if (!debugging)

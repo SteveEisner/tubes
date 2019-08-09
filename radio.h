@@ -6,7 +6,7 @@
 #include "timer.h"
 
 #define USERADIO
-#define RADIO_VERSION 5
+#define RADIO_VERSION 6
 
 #ifdef USERADIO
 NRFLite _radio(Serial);

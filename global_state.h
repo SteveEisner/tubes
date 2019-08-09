@@ -15,7 +15,6 @@ class TubeState {
   // Global clock: frames are defined as 1/64th of a beat
   accum88 bpm = 0;            // BPM in high 8 bits, fraction in low 8 bits 
   uint32_t frame = 0;         // current frame #
-  uint32_t accum = 0;         // accumulator toward next beat, 14 bits of precision
 
   // Pattern parameters
   uint8_t pattern = 0;        // Index number of current pattern

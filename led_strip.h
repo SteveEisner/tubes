@@ -14,7 +14,7 @@ FASTLED_USING_NAMESPACE
 class LEDs {
   public:
     CRGB leds[MAX_LEDS];
-    const static int DATA_PIN = 17;
+    const static int DATA_PIN = 1;
     const static int FRAMES_PER_SECOND = 100;  // how often we refresh the strip, in frames per second
     const static int REFRESH_PERIOD = 1000 / FRAMES_PER_SECOND;  // how often we refresh the strip, in milliseconds
     int num_leds;
@@ -25,7 +25,7 @@ class LEDs {
   
   void setup() {
     // tell FastLED about the LED strip configuration
-    FastLED.addLeds<NEOPIXEL, this->DATA_PIN>(this->leds, this->num_leds).setCorrection(TypicalLEDStrip);
+    FastLED.addLeds<WS2812SERIAL,DATA_PIN,RGB>(this->leds, this->num_leds).setCorrection(TypicalLEDStrip);
     Serial.println("LEDs: ok");
   }
   
