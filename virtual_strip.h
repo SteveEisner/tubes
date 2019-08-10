@@ -63,6 +63,7 @@ class VirtualStrip {
 
   VirtualStrip(uint8_t num_leds=MAX_LEDS)
   {
+    this->fade = Dead;
     this->num_leds = num_leds;
   }
 
@@ -82,6 +83,8 @@ class VirtualStrip {
 
   void fadeOut(uint8_t fade_speed=DEFAULT_FADE_SPEED)
   {
+    if (this->fade == Dead)
+      return;
     this->fade = FadeOut;
     this->fade_speed = fade_speed;
   }
@@ -94,11 +97,13 @@ class VirtualStrip {
   void fill(CRGB crgb) 
   {
     fill_solid( this->leds, this->num_leds, crgb);
-
   }
 
   void update(uint32_t frame)
   {
+    if (this->fade == Dead)
+      return;
+
     this->frame = frame;
     switch (this->animation.sync) {
       case All:
@@ -172,6 +177,9 @@ class VirtualStrip {
   }
 
   void blend(CRGB strip[], bool overwrite=0) {
+    if (this->fade == Dead)
+      return;
+
     for (unsigned i=0; i < this->num_leds; i++) {
       CRGB c = this->leds[i];
       nscale8x3(c.r, c.g, c.b, this->brightness);

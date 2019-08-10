@@ -24,10 +24,10 @@ bool radioAlive = false;                            // true if radio booted up
 
 #define RADIO_SENDPERIOD 1000                       // how often we broadcast, in millisec
 
-Timer radioSendTimer;
-Timer radioMuteTimer;
-
 class Radio;
+
+typedef uint16_t CommandId;
+typedef uint8_t TubeId;
 
 typedef struct {
   CommandId command;
@@ -35,6 +35,14 @@ typedef struct {
   byte data[26];
   uint16_t crc = 0;
 } RadioMessage;
+
+class MessageReceiver {
+  public:
+
+  void onCommandReceived(uint8_t fromId, CommandId command, byte *data) {
+    // Abstract: subclasses must define
+  }
+};
 
 uint16_t calculate_crc( byte *data, byte len ) {
 
@@ -77,180 +85,138 @@ void printMessageData(RadioMessage &message, int size) {
   Serial.print(F("] "));
 }
 
-bool sendRadioMessage(uint32_t command, void *data=0, uint8_t size=0)
-{
-  bool sent = 0;
-#ifdef USERADIO
-  RadioMessage message;
-  if (size > sizeof(message.data)) {
-    Serial.println(F("Too big to send"));
-    return 0;
-  }
-
-  message.tubeId = tubeId;
-  message.command = command + (RADIO_VERSION << 12);
-  memset(message.data, 0, sizeof(message.data));
-  memcpy(message.data, data, size);
-  uint16_t crc = calculate_crc(message.data, sizeof(message.data));
-  message.crc = crc;
-
-  Serial.print(F("Sending "));
-  Serial.print(message.command, HEX);
-  Serial.print(F(" "));
-  Serial.print(message.tubeId);
-  // Serial.print(" ");
-  // printMessageData(message, size);
-
-  sent = _radio.send(RADIO_TX_ID, &message, sizeof(message), NRFLite::NO_ACK);
-  Serial.println(sent ? F(" ok") : F(" failed"));
-#endif
-  return sent;
-}
-
-Timer mTimer;
-
-void receiveRadioMessage(PatternController *controller)
-{
-  if (mTimer.ended()) {
-    Serial.println(F("I have no master"));
-    masterTubeId = 0;
-    mTimer.snooze(100000);
-  }
-
-#ifdef USERADIO
-  RadioMessage message;
-
-  if (!radioAlive)
-  {
-    Serial.println(F("No radio"));
-    return;
-  }
-  
-  // check for incoming data
-  while (_radio.hasData())
-  {
-    _radio.readData(&message);
-
-    if ((message.command>>12) != RADIO_VERSION)
-      return;
-
-    unsigned long crc = calculate_crc(message.data, sizeof(message.data));
-    if (crc != message.crc) {
-      // Corrupt packet... ignore it.
-      Serial.print(F("Invalid CRC: "));
-      Serial.print(message.crc);
-      Serial.print(F(" should be "));
-      Serial.println(crc);
-      continue;
-    }
-
-    if (message.tubeId > tubeId && message.tubeId > masterTubeId) {
-      // Found a new master!
-      masterTubeId = message.tubeId;
-      Serial.print(F("All hail new master "));
-      Serial.println(masterTubeId);
-    }  
-
-    if (message.tubeId == tubeId) {
-      // fix the ID collision by choosing a new random one
-      Serial.println(F("ID collision!"));
-      tubeId = newTubeId();
-    } else if (message.tubeId > tubeId) {
-      // We know someone is higher ID than us, so stop and listen for a bit
-      radioMuteTimer.start(RADIO_SENDPERIOD * 5);
-    }
-    
-    if (message.tubeId == masterTubeId) {
-      // Track the last time we received a message from our master
-      mTimer.start(RADIO_SENDPERIOD * 8);
-    }
-
-    // Process the command
-    controller->onCommandReceived(message.tubeId, message.command & 0xFFF, message.data);
-  }
-#endif
-}
-
-// initialize the radio code
-void setupRadio()
-{
-  tubeId = newTubeId();
-
-#ifdef USERADIO
-  SPI.setSCK(PIN_RADIO_SCK);
-  SPI.setMOSI(PIN_RADIO_MOSI);
-  SPI.setMISO(PIN_RADIO_MISO);
-  SPI.begin();
-  
-  if (_radio.init(RADIO_RX_ID, PIN_RADIO_CE, PIN_RADIO_CSN))
-    radioAlive = true;
-  Serial.println(radioAlive ? F("Radio: ok") : F("Radio: fail"));
-
-  // Start the radio, but mute & listen for a bit
-  radioSendTimer.start(RADIO_SENDPERIOD);
-  radioMuteTimer.start(RADIO_SENDPERIOD * 3);
-
-  sendRadioMessage(COMMAND_HELLO);
-#endif
-}
-
 class Radio {
   public:
-    PatternController *controller;
+    Timer muteTimer;
+    Timer slaveTimer;
+
+    TubeId tubeId = 0;
+    TubeId masterTubeId = 0;
 
     unsigned long radioFailures = 0;
     unsigned long radioRestarts = 0;
 
-  Radio (PatternController *controller) {
-    this->controller = controller;
-  }
-
   void setup() {
-    setupRadio();
-  }
-
-  void update() {
-    this->sendRadioUpdate();
-    receiveRadioMessage(this->controller);
-  }
-
-  void sendRadioUpdate()
-  {
-    if (!radioAlive)
-      return;
+    this->tubeId = newTubeId();
   
-    // check mute timer
-    if (!radioMuteTimer.ended())
-      return;
-  
-    // run periodic timer
-    if (!radioSendTimer.ended())
-      return;
-  
-    Serial.print(F("Update "));
-    printState(&currentState);
-    Serial.print(F(" "));
+#ifdef USERADIO
+    SPI.setSCK(PIN_RADIO_SCK);
+    SPI.setMOSI(PIN_RADIO_MOSI);
+    SPI.setMISO(PIN_RADIO_MISO);
+    SPI.begin();
     
-    if (sendRadioMessage(COMMAND_UPDATE, &currentState, sizeof(currentState)))
-    {
-      this->radioFailures = 0;
-      if (currentState.timer < RADIO_SENDPERIOD) {
-        radioSendTimer.start(RADIO_SENDPERIOD / 4);
-      } else {
-        radioSendTimer.start(RADIO_SENDPERIOD);
-      }
+    if (_radio.init(RADIO_RX_ID, PIN_RADIO_CE, PIN_RADIO_CSN))
+      radioAlive = true;
+    Serial.println(radioAlive ? F("Radio: ok") : F("Radio: fail"));
+  
+    // Start the radio, but mute & listen for a bit
+    this->muteTimer.start(RADIO_SENDPERIOD * 3);
+#endif
+  }
+
+  bool sendCommand(uint32_t command, void *data=0, uint8_t size=0)
+  {
+    bool sent = 0;
+    if (!radioAlive)
+      return sent;
+  
+#ifdef USERADIO
+    RadioMessage message;
+    if (size > sizeof(message.data)) {
+      Serial.println(F("Too big to send"));
+      return 0;
     }
-    else
-    {
-      // might have been a collision.  Back off by a small amount determined by ID
-      Serial.println(F("Radio update failed"));
-      radioSendTimer.snooze( (tubeId & 0x7F) * 1000 );
-      this->radioFailures++;
-      if (radioFailures > 100) {
-        setupRadio();
-        this->radioRestarts++;
-      }
+  
+    message.tubeId = tubeId;
+    message.command = command + (RADIO_VERSION << 12);
+    memset(message.data, 0, sizeof(message.data));
+    memcpy(message.data, data, size);
+    uint16_t crc = calculate_crc(message.data, sizeof(message.data));
+    message.crc = crc;
+  
+    Serial.print(F("Sending "));
+    Serial.print(message.command, HEX);
+    Serial.print(F(" "));
+    Serial.print(message.tubeId);
+    // Serial.print(" ");
+    // printMessageData(message, size);
+  
+    sent = _radio.send(RADIO_TX_ID, &message, sizeof(message), NRFLite::NO_ACK);
+    Serial.println(sent ? F(" ok") : F(" failed"));
+#endif
+
+    return sent;
+  }
+
+  void sendUpdate(uint32_t command, void *data=0, uint8_t size=0)
+  {
+    // check mute timer
+    if (!this->muteTimer.ended())
+      return;
+
+    this->sendCommand(command, data, size);
+  }
+
+  void receiveCommands(MessageReceiver *receiver)
+  {
+    if (this->slaveTimer.ended()) {
+      Serial.println(F("I have no master"));
+      masterTubeId = 0;
+      this->slaveTimer.snooze(100000);
     }
+  
+#ifdef USERADIO
+    RadioMessage message;
+  
+    if (!radioAlive)
+    {
+      Serial.println(F("No radio"));
+      return;
+    }
+    
+    // check for incoming data
+    while (_radio.hasData())
+    {
+      _radio.readData(&message);
+  
+      if ((message.command>>12) != RADIO_VERSION)
+        return;
+  
+      unsigned long crc = calculate_crc(message.data, sizeof(message.data));
+      if (crc != message.crc) {
+        // Corrupt packet... ignore it.
+        Serial.print(F("Invalid CRC: "));
+        Serial.print(message.crc);
+        Serial.print(F(" should be "));
+        Serial.println(crc);
+        continue;
+      }
+  
+      if (message.tubeId > tubeId && message.tubeId > masterTubeId) {
+        // Found a new master!
+        masterTubeId = message.tubeId;
+        Serial.print(F("All hail new master "));
+        Serial.println(masterTubeId);
+      }  
+  
+      if (message.tubeId == tubeId) {
+        // fix the ID collision by choosing a new random one
+        Serial.println(F("ID collision!"));
+        tubeId = newTubeId();
+      } else if (message.tubeId > tubeId) {
+        // We know someone is higher ID than us, so stop and listen for a bit
+        this->muteTimer.start(RADIO_SENDPERIOD * 5);
+      }
+      
+      if (message.tubeId == masterTubeId) {
+        // Track the last time we received a message from our master
+        this->slaveTimer.start(RADIO_SENDPERIOD * 8);
+      }
+  
+      // Process the command
+      receiver->onCommandReceived(message.tubeId, message.command & 0xFFF, message.data);
+    }
+#endif
   }
 
 };

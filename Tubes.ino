@@ -18,9 +18,9 @@
 
 
 BeatController beats;
-PatternController controller(&beats);
-Radio radio(&controller);
-DebugController debug(&controller, &radio);
+Radio radio;
+PatternController controller(&beats, &radio);
+DebugController debug(&controller);
 
 
 void randomize(long seed) {
@@ -37,7 +37,6 @@ void setup() {
 
   // Start timing
   beats.setup();
-  radio.setup();
   controller.setup();
   debug.setup();
 }
@@ -45,8 +44,7 @@ void setup() {
 void loop()
 {
   beats.update(); // ~30us
-  radio.update(); // ~60us or ~3000us
-  controller.update(); // patterns: 0-3000us   lcd: ~50000us
+  controller.update(); // radio: 0-3000us   patterns: 0-3000us   lcd: ~50000us
   debug.update(); // ~25us
   controller.led_strip->update(); // ~25us
 
