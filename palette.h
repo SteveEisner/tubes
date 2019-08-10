@@ -471,13 +471,10 @@ DEFINE_GRADIENT_PALETTE( Blue_Cyan_Yellow_gp ) {
 // This will let us programmatically choose one based on
 // a number, rather than having to activate each explicitly 
 // by name every time.
-// Since it is const, this array could also be moved 
-// into PROGMEM to save SRAM, but for simplicity of illustration
-// we'll keep it in a regular SRAM array.
 //
 // This list of color palettes acts as a "playlist"; you can
 // add or delete, or re-arrange as you wish.
-const TProgmemRGBGradientPalettePtr gGradientPalettes[] = {
+static const TProgmemRGBGradientPalettePtr gGradientPalettes[] PROGMEM = {
   Sunset_Real_gp,
   es_rivendell_15_gp,
   es_ocean_breeze_036_gp,
@@ -514,6 +511,6 @@ const TProgmemRGBGradientPalettePtr gGradientPalettes[] = {
 
 
 // Count of how many cpt-city gradients are defined:
-const uint8_t gGradientPaletteCount = sizeof( gGradientPalettes) / sizeof( TProgmemRGBGradientPalettePtr );
+const uint8_t gGradientPaletteCount = ARRAY_SIZE(gGradientPalettes);
 
 #endif

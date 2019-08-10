@@ -61,17 +61,23 @@ class VirtualStrip {
     uint16_t beat16;
     uint8_t hue;
 
-  VirtualStrip(Animation &animation)
+  VirtualStrip(uint8_t num_leds=MAX_LEDS)
   {
+    this->num_leds = num_leds;
+  }
+
+  ~VirtualStrip() {
+    destroyParticles(this);
+  }
+
+  void load(Animation &animation)
+  {
+    destroyParticles(this);
     this->animation = animation;
     this->fade = FadeIn;
     this->fader = 0;
     this->fade_speed = animation.fade_speed;
     this->brightness = DEFAULT_BRIGHTNESS;
-  }
-
-  ~VirtualStrip() {
-    destroyParticles(this);
   }
 
   void fadeOut(uint8_t fade_speed=DEFAULT_FADE_SPEED)

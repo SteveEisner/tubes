@@ -7,11 +7,17 @@
 #include "led_strip.h"
 #include "lcd.h"
 
-#define BUTTON_PIN   2
 #define X_AXIS_PIN 20
 #define Y_AXIS_PIN 21
 
-EasyButton button(BUTTON_PIN);
+#define BUTTON_PIN_1   2
+#define BUTTON_PIN_2   3
+#define BUTTON_PIN_3   4
+#define BUTTON_PIN_4   5
+EasyButton button1(BUTTON_PIN_1);
+EasyButton button2(BUTTON_PIN_2);
+EasyButton button3(BUTTON_PIN_3);
+EasyButton button4(BUTTON_PIN_4);
 
 typedef uint8_t TubeId;
 
@@ -25,9 +31,30 @@ const static CommandId COMMAND_FIREWORK = 0x321;
 const static CommandId COMMAND_HELLO = 0x000;
 const static CommandId COMMAND_OPTIONS = 0x123;
 
-void onButtonPressed()
+void onButton1Pressed()
 {
-  Serial.println("button pressed");
+  Serial.println(F("button 1 pressed"));
+  // throwFirework(255);
+  // sendRadioMessage(COMMAND_FIREWORK);
+}
+
+void onButton2Pressed()
+{
+  Serial.println(F("button 2 pressed"));
+  // throwFirework(255);
+  // sendRadioMessage(COMMAND_FIREWORK);
+}
+
+void onButton3Pressed()
+{
+  Serial.println(F("button 3 pressed"));
+  // throwFirework(255);
+  // sendRadioMessage(COMMAND_FIREWORK);
+}
+
+void onButton4Pressed()
+{
+  Serial.println(F("button 4 pressed"));
   // throwFirework(255);
   // sendRadioMessage(COMMAND_FIREWORK);
 }
@@ -87,24 +114,32 @@ class PatternController {
     this->lcd->setup();
     this->led_strip->setup();
 
-    this->setPattern(0, random8(gGradientPaletteCount), All);
+    this->setPattern(0, random8(gGradientPaletteCount), randomSyncMode());
     this->patternTimer.start(NEXT_PATTERN_TIME);
     this->paletteTimer.start(NEXT_PALETTE_TIME);
     Serial.println("Graphics: ok");
 
-    button.begin();
-    button.onPressed(onButtonPressed);
-    Serial.println("Controls: ok");
+    button1.begin();
+    button2.begin();
+    button3.begin();
+    button4.begin();
+    button1.onPressed(onButton1Pressed);
+    button2.onPressed(onButton2Pressed);
+    button3.onPressed(onButton3Pressed);
+    button4.onPressed(onButton4Pressed);
+    Serial.println(F("Controls: ok"));
   }
 
   void update()
   {
     currentState.timer += globalTimer.delta_millis;
 
-    button.read();
+    button1.read();
+    button2.read();
+    button3.read();
+    button4.read();
     this->x_axis = analogRead(X_AXIS_PIN) >> 3;
     this->y_axis = analogRead(Y_AXIS_PIN) >> 3;
-    this->b = digitalRead(BUTTON_PIN);
 
     currentState.bpm = this->beats->bpm;
     currentState.frame = this->beats->frame;
@@ -123,15 +158,11 @@ class PatternController {
       this->updateGraphics();
     }
 
-    // Running the LCD takes ~50ms!
-    return;
-
     if (this->lcd->active) {
       this->lcd->size(1);
       this->lcd->write(0,56, currentState.frame);
       this->lcd->write(80,56, this->x_axis);
       this->lcd->write(100,56, this->y_axis);
-      this->lcd->write(80,48, this->b);
       this->lcd->show();
 
       this->lcd->update();
@@ -153,7 +184,7 @@ class PatternController {
     currentState.palette_id = palette_id;
     currentState.sync = (uint8_t)sync;
   
-    Serial.print("new pattern: ");
+    Serial.print(F("new pattern: "));
     printState(&currentState);
     Serial.println();
   
@@ -168,11 +199,14 @@ class PatternController {
     animation.sync = sync;
     animation.effect = None;
     
-    VirtualStrip *vstrip = new VirtualStrip(animation);
+    VirtualStrip *vstrip = new VirtualStrip();
+    vstrip->load(animation);
     this->vstrips.add(vstrip);
   }
 
   SyncMode randomSyncMode() {
+    return Swing;
+
     uint8_t r = random() % 128;
     if (r < 40)
       return SinDrift;
@@ -229,26 +263,26 @@ class PatternController {
   }
 
   void onCommandReceived(uint8_t fromId, CommandId command, byte *data) {
-    Serial.print("From ");
+    Serial.print(F("From "));
     Serial.print(fromId);
-    Serial.print(": ");
+    Serial.print(F(": "));
     
     switch (command) {
       case COMMAND_FIREWORK:
-        Serial.println("fireworks");
+        Serial.println(F("fireworks"));
         // throwFirework(255);
         return;
   
       case COMMAND_RESET:
-        Serial.println("reset");
+        Serial.println(F("reset"));
         return;
   
       case COMMAND_HELLO:
-        Serial.println("hello");
+        Serial.println(F("hello"));
         return;
   
       case COMMAND_OPTIONS: {
-        Serial.println("options");
+        Serial.println(F("options"));
         uint8_t options;
         memcpy(&options, data, sizeof(options));
         // debug.debugging = options & 1;
@@ -261,10 +295,10 @@ class PatternController {
         printState(&state);
   
         if (fromId < masterTubeId) {
-          Serial.println(" (ignoring)");
+          Serial.println(F(" (ignoring)"));
           return;
         } 
-        Serial.println(" (obeying)");
+        Serial.println(F(" (obeying)"));
   
         this->startPattern(state.pattern, state.palette_id, (SyncMode)state.sync);
         this->beats->sync(state.bpm, state.frame);
@@ -272,7 +306,7 @@ class PatternController {
         return;
     }
   
-    Serial.print("UNKNOWN ");
+    Serial.print(F("UNKNOWN "));
     Serial.println(command, HEX);
   }
 

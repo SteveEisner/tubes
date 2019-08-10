@@ -26,17 +26,17 @@ TubeState currentState;
 
 void printState(TubeState *state)
 {
-  Serial.print("[");
+  Serial.print(F("["));
   Serial.print(state->pattern);
-  Serial.print(",");
+  Serial.print(F(","));
   Serial.print(state->palette_id);
-  Serial.print(" ");
+  Serial.print(F(" "));
   Serial.print(state->timer);
-  Serial.print("ms/");
+  Serial.print(F("ms/"));
   Serial.print(state->frame);
-  Serial.print("f ");
+  Serial.print(F("f "));
   Serial.print(state->bpm);
-  Serial.print("]");
+  Serial.print(F("]"));
 }
 
 #endif

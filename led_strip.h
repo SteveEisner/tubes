@@ -26,7 +26,7 @@ class LEDs {
   void setup() {
     // tell FastLED about the LED strip configuration
     FastLED.addLeds<WS2812SERIAL,DATA_PIN,RGB>(this->leds, this->num_leds).setCorrection(TypicalLEDStrip);
-    Serial.println("LEDs: ok");
+    Serial.println(F("LEDs: ok"));
   }
   
   void update() {

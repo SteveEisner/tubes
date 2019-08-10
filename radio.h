@@ -65,16 +65,16 @@ uint8_t newTubeId() {
 
 void printMessageData(RadioMessage &message, int size) {
   Serial.print(sizeof(message.data));
-  Serial.print(":");
+  Serial.print(F(":"));
   for (unsigned int i = 0; i < sizeof(message.data); i++) {
     if (message.data[i] < 16)
-      Serial.print("0");
+      Serial.print(F("0"));
     Serial.print(message.data[i], HEX);
-    Serial.print(" ");
+    Serial.print(F(" "));
   }
-  Serial.print("[");
+  Serial.print(F("["));
   Serial.print(size);
-  Serial.print("] ");
+  Serial.print(F("] "));
 }
 
 bool sendRadioMessage(uint32_t command, void *data=0, uint8_t size=0)
@@ -83,7 +83,7 @@ bool sendRadioMessage(uint32_t command, void *data=0, uint8_t size=0)
 #ifdef USERADIO
   RadioMessage message;
   if (size > sizeof(message.data)) {
-    Serial.println("Too big to send");
+    Serial.println(F("Too big to send"));
     return 0;
   }
 
@@ -94,15 +94,15 @@ bool sendRadioMessage(uint32_t command, void *data=0, uint8_t size=0)
   uint16_t crc = calculate_crc(message.data, sizeof(message.data));
   message.crc = crc;
 
-  Serial.print("Sending ");
+  Serial.print(F("Sending "));
   Serial.print(message.command, HEX);
-  Serial.print(" ");
+  Serial.print(F(" "));
   Serial.print(message.tubeId);
   // Serial.print(" ");
   // printMessageData(message, size);
 
   sent = _radio.send(RADIO_TX_ID, &message, sizeof(message), NRFLite::NO_ACK);
-  Serial.println(sent ? " ok" : " failed");
+  Serial.println(sent ? F(" ok") : F(" failed"));
 #endif
   return sent;
 }
@@ -112,7 +112,7 @@ Timer mTimer;
 void receiveRadioMessage(PatternController *controller)
 {
   if (mTimer.ended()) {
-    Serial.println("I have no master");
+    Serial.println(F("I have no master"));
     masterTubeId = 0;
     mTimer.snooze(100000);
   }
@@ -122,7 +122,7 @@ void receiveRadioMessage(PatternController *controller)
 
   if (!radioAlive)
   {
-    Serial.println("No radio");
+    Serial.println(F("No radio"));
     return;
   }
   
@@ -137,9 +137,9 @@ void receiveRadioMessage(PatternController *controller)
     unsigned long crc = calculate_crc(message.data, sizeof(message.data));
     if (crc != message.crc) {
       // Corrupt packet... ignore it.
-      Serial.print("Invalid CRC: ");
+      Serial.print(F("Invalid CRC: "));
       Serial.print(message.crc);
-      Serial.print(" should be ");
+      Serial.print(F(" should be "));
       Serial.println(crc);
       continue;
     }
@@ -147,13 +147,13 @@ void receiveRadioMessage(PatternController *controller)
     if (message.tubeId > tubeId && message.tubeId > masterTubeId) {
       // Found a new master!
       masterTubeId = message.tubeId;
-      Serial.print("All hail new master ");
+      Serial.print(F("All hail new master "));
       Serial.println(masterTubeId);
     }  
 
     if (message.tubeId == tubeId) {
       // fix the ID collision by choosing a new random one
-      Serial.println("ID collision!");
+      Serial.println(F("ID collision!"));
       tubeId = newTubeId();
     } else if (message.tubeId > tubeId) {
       // We know someone is higher ID than us, so stop and listen for a bit
@@ -184,7 +184,7 @@ void setupRadio()
   
   if (_radio.init(RADIO_RX_ID, PIN_RADIO_CE, PIN_RADIO_CSN))
     radioAlive = true;
-  Serial.println(radioAlive ? "Radio: ok" : "Radio: fail");
+  Serial.println(radioAlive ? F("Radio: ok") : F("Radio: fail"));
 
   // Start the radio, but mute & listen for a bit
   radioSendTimer.start(RADIO_SENDPERIOD);
@@ -227,9 +227,9 @@ class Radio {
     if (!radioSendTimer.ended())
       return;
   
-    Serial.print("Update ");
+    Serial.print(F("Update "));
     printState(&currentState);
-    Serial.print(" ");
+    Serial.print(F(" "));
     
     if (sendRadioMessage(COMMAND_UPDATE, &currentState, sizeof(currentState)))
     {
@@ -243,7 +243,7 @@ class Radio {
     else
     {
       // might have been a collision.  Back off by a small amount determined by ID
-      Serial.println("Radio update failed");
+      Serial.println(F("Radio update failed"));
       radioSendTimer.snooze( (tubeId & 0x7F) * 1000 );
       this->radioFailures++;
       if (radioFailures > 100) {

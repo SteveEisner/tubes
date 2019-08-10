@@ -41,11 +41,11 @@ class Lcd {
     // SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
     if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Address 0x3C for 128x64
       this->active = 0;
-      Serial.println("LCD: no");
+      Serial.println(F("LCD: no"));
       return;
     }
 
-    Serial.println("LCD: ok");
+    Serial.println(F("LCD: ok"));
     this->clear();
     this->drawText();
     this->show();

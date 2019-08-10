@@ -71,7 +71,7 @@ class DebugController {
     }
 
     EVERY_N_MILLISECONDS( 10000 ) {
-      Serial.print("Free memory: ");
+      Serial.print(F("Free memory: "));
       Serial.println( freeMemory() );
     }
   }

@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <array.h>
+#include <avr/pgmspace.h>
 
 #include <WS2812Serial.h>
 #define USE_WS2812SERIAL
