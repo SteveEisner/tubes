@@ -8,6 +8,22 @@
 
 #define ARRAY_SIZE(A) (sizeof(A) / sizeof((A)[0]))
 
+// #define MASTERCONTROL
+
+#ifdef MASTERCONTROL
+
+#define NUM_LEDS 64
+#define USELCD
+#define USERADIO
+#define USEJOYSTICK
+
+#else
+
+#define NUM_LEDS 64
+#define USERADIO
+
+#endif
+
 #include "timer.h"
 #include "beats.h"
 #include "global_state.h"
@@ -19,7 +35,7 @@
 
 BeatController beats;
 Radio radio;
-PatternController controller(&beats, &radio);
+PatternController controller(NUM_LEDS, &beats, &radio);
 DebugController debug(&controller);
 
 

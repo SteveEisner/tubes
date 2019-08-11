@@ -46,7 +46,7 @@ class VirtualStrip {
 
   public:
     CRGB leds[MAX_LEDS];
-    uint8_t num_leds = MAX_LEDS;
+    uint8_t num_leds;
     uint8_t brightness;
 
     // Fade in/out

@@ -37,9 +37,7 @@ class BeatController {
     this->frame = frame;
     this->accum = 0;
 
-    float f = 61440000000.0 / (float)bpm;
-    Serial.println(f);
-    this->micros_per_frame = (uint32_t)f; // 24:8 bitwise float
+    this->micros_per_frame = (uint32_t)(61440000000.0 / (float)bpm); // 24:8 bitwise float
   }
   
   void set_bpm(accum88 bpm) {

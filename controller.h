@@ -84,6 +84,7 @@ class PatternController : public MessageReceiver {
     const static int FRAMES_PER_SECOND = 150;  // how often we animate, in frames per second
     const static int REFRESH_PERIOD = 1000 / FRAMES_PER_SECOND;  // how often we animate, in milliseconds
 
+    uint8_t num_leds;
     VirtualStrip *vstrips[NUM_VSTRIPS];
     uint8_t next_vstrip = 0;
     
@@ -91,6 +92,8 @@ class PatternController : public MessageReceiver {
     Timer paletteTimer;
     Timer graphicsTimer;
     Timer updateTimer;
+    Timer slaveTimer;
+
     Lcd *lcd;
     LEDs *led_strip;
     BeatController *beats;
@@ -101,9 +104,10 @@ class PatternController : public MessageReceiver {
     uint16_t b;
     ControllerOptions options;
 
-  PatternController(BeatController *beats, Radio *radio) {
+  PatternController(uint8_t num_leds, BeatController *beats, Radio *radio) {
+    this->num_leds = num_leds;
     this->lcd = new Lcd();
-    this->led_strip = new LEDs();
+    this->led_strip = new LEDs(num_leds);
     this->beats = beats;
     this->radio = radio;
 
@@ -114,6 +118,8 @@ class PatternController : public MessageReceiver {
   
   void setup()
   {
+    this->options.debugging = 1;
+    
     this->lcd->setup();
     this->led_strip->setup();
 
@@ -134,7 +140,9 @@ class PatternController : public MessageReceiver {
 
     this->radio->setup();
     this->radio->sendCommand(COMMAND_HELLO);
-    this->updateTimer.start(RADIO_SENDPERIOD);
+
+    this->slaveTimer.start(RADIO_SENDPERIOD * 3); // Assume we're a slave at first, just listen for a master.
+    this->updateTimer.start(RADIO_SENDPERIOD); // Ready to send an update as soon as we're able to
   }
 
   void update()
@@ -145,6 +153,8 @@ class PatternController : public MessageReceiver {
     button2.read();
     button3.read();
     button4.read();
+
+ #ifdef USEJOYSTICK
     this->x_axis = analogRead(X_AXIS_PIN) >> 3;
     this->y_axis = analogRead(Y_AXIS_PIN) >> 3;
 
@@ -159,45 +169,53 @@ class PatternController : public MessageReceiver {
         this->options.debugging = 0;
         this->radio->sendCommand(COMMAND_OPTIONS, &this->options, sizeof(this->options));
       }
-    
+#endif
+
     currentState.bpm = this->beats->bpm;
     currentState.frame = this->beats->frame;
-
-    if (this->patternTimer.ended()) {
-      this->nextPattern();
-      this->patternTimer.snooze(NEXT_PATTERN_TIME);
-    }
-
-    if (this->paletteTimer.ended()) {
-      this->nextPalette();
-      this->paletteTimer.snooze(NEXT_PALETTE_TIME);
-    }
 
     if (this->graphicsTimer.every(REFRESH_PERIOD)) {
       this->updateGraphics();
     }
 
-    // run periodic timer
-    if (this->updateTimer.ended()) {
-      Serial.print(F("Update "));
-      printState(&currentState);
-      Serial.print(F(" "));
+    if (this->isMaster()) {
+      if (this->radio->masterTubeId) {
+        Serial.println(F("I have no master"));
+        this->radio->masterTubeId = 0;
+      }
 
-      if (this->radio->sendCommand(COMMAND_UPDATE, &currentState, sizeof(currentState))) {
-        this->radio->radioFailures = 0;
-        if (currentState.timer < RADIO_SENDPERIOD) {
-          this->updateTimer.start(RADIO_SENDPERIOD / 4);
+      if (this->patternTimer.ended()) {
+        this->nextPattern();
+        this->patternTimer.snooze(NEXT_PATTERN_TIME);
+      }
+  
+      if (this->paletteTimer.ended()) {
+        this->nextPalette();
+        this->paletteTimer.snooze(NEXT_PALETTE_TIME);
+      }
+  
+      // run periodic timer
+      if (this->updateTimer.ended()) {
+        Serial.print(F("Update "));
+        printState(&currentState);
+        Serial.print(F(" "));
+  
+        if (this->radio->sendCommand(COMMAND_UPDATE, &currentState, sizeof(currentState))) {
+          this->radio->radioFailures = 0;
+          if (currentState.timer < RADIO_SENDPERIOD) {
+            this->updateTimer.start(RADIO_SENDPERIOD / 4);
+          } else {
+            this->updateTimer.start(RADIO_SENDPERIOD);
+          }
         } else {
-          this->updateTimer.start(RADIO_SENDPERIOD);
-        }
-      } else {
-        // might have been a collision.  Back off by a small amount determined by ID
-        Serial.println(F("Radio update failed"));
-        this->updateTimer.snooze( (this->radio->tubeId & 0x7F) * 1000 );
-        this->radio->radioFailures++;
-        if (this->radio->radioFailures > 100) {
-          this->radio->setup();
-          this->radio->radioRestarts++;
+          // might have been a collision.  Back off by a small amount determined by ID
+          Serial.println(F("Radio update failed"));
+          this->updateTimer.snooze( (this->radio->tubeId & 0x7F) * 1000 );
+          this->radio->radioFailures++;
+          if (this->radio->radioFailures > 100) {
+            this->radio->setup();
+            this->radio->radioRestarts++;
+          }
         }
       }
     }
@@ -264,19 +282,16 @@ class PatternController : public MessageReceiver {
     return All;
   }
 
+  bool isMaster() {
+    return this->slaveTimer.ended();
+  }
+
   void nextPalette() {
     // If we're not in control - don't do anything
-    if (this->radio->masterTubeId)
-      return;
-
     this->setPalette(random8(gGradientPaletteCount));
   }
 
   void nextPattern() {
-    // If we're not in control - don't do anything
-    if (this->radio->masterTubeId)
-      return;
-  
     // add one to the current pattern number, and wrap around at the end
     uint8_t p = addmod8(currentState.pattern, 1, gPatternsCount);
     SyncMode s = this->randomSyncMode();
@@ -301,7 +316,10 @@ class PatternController : public MessageReceiver {
     }
   }
 
-  void onCommandReceived(uint8_t fromId, CommandId command, byte *data) {
+  virtual void onCommandReceived(uint8_t fromId, CommandId command, byte *data) {
+    // Track the last time we received a message from our master
+    this->slaveTimer.start(RADIO_SENDPERIOD * 8);
+
     Serial.print(F("From "));
     Serial.print(fromId);
     Serial.print(F(": "));
