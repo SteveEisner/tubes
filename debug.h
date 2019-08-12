@@ -27,6 +27,8 @@ class DebugController {
     PatternController *controller;
     LEDs *strip;
     Radio *radio;
+    uint32_t lastPhraseTime;
+    uint32_t lastFrame;
 
   DebugController(PatternController *controller) {
     this->controller = controller;
@@ -36,6 +38,8 @@ class DebugController {
   
   void setup()
   {
+    this->lastPhraseTime = globalTimer.now_micros;
+    this->lastFrame = (uint32_t)-1;
   }
 
   void update()
@@ -43,6 +47,16 @@ class DebugController {
     if (!this->controller->options.debugging)
       return;
 
+    uint32_t frame = currentState.frame % (64 * 32);
+    if (frame == 0 && this->lastFrame != 0) {
+      uint32_t t = globalTimer.now_micros;
+      Serial.print(t - this->lastPhraseTime);
+      Serial.print(F(" from "));
+      this->controller->beats->print_bpm();
+      this->lastPhraseTime = t;
+    }
+    this->lastFrame = frame;
+    
     uint8_t p1 = (currentState.frame >> 6) % 16;
     this->strip->leds[p1] = CRGB::White;
 

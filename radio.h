@@ -219,9 +219,6 @@ class Radio {
       }  
 
       // Process the command
-      Serial.print(message.tubeId);
-      Serial.print(" ");
-      Serial.println(message.command & 0xFFF, HEX);
       receiver->onCommand(message.tubeId, message.command & 0xFFF, message.data);
 
       // Occcasionally relay commands - more frequently if higher ID

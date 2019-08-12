@@ -20,7 +20,7 @@ EasyButton button2(BUTTON_PIN_2);
 EasyButton button3(BUTTON_PIN_3);
 EasyButton button4(BUTTON_PIN_4);
 
-const static uint8_t DEFAULT_BRIGHTNESS = 144;
+const static uint8_t DEFAULT_MASTER_BRIGHTNESS = 144;
 
 const static CommandId COMMAND_UPDATE = 0x411;
 const static CommandId COMMAND_RESET = 0x911;
@@ -89,7 +89,6 @@ class PatternController : public MessageReceiver {
     const static int REFRESH_PERIOD = 1000 / FRAMES_PER_SECOND;  // how often we animate, in milliseconds
 
     uint8_t num_leds;
-    uint8_t brightness;
     VirtualStrip *vstrips[NUM_VSTRIPS];
     uint8_t next_vstrip = 0;
     
@@ -124,7 +123,7 @@ class PatternController : public MessageReceiver {
   void setup()
   {
     this->options.debugging = 1;
-    this->options.brightness = DEFAULT_BRIGHTNESS;
+    this->options.brightness = DEFAULT_MASTER_BRIGHTNESS;
     
     this->lcd->setup();
     this->led_strip->setup();
@@ -282,8 +281,6 @@ class PatternController : public MessageReceiver {
   }
 
   SyncMode randomSyncMode() {
-    return Swing;
-
     uint8_t r = random() % 128;
     if (r < 40)
       return SinDrift;
@@ -325,7 +322,7 @@ class PatternController : public MessageReceiver {
         continue;
 
       vstrip->update(currentState.frame);
-      vstrip->blend(this->led_strip->leds, first, this->brightness);
+      vstrip->blend(this->led_strip->leds, this->options.brightness, first);
       first = 0;
     }
   }
@@ -424,6 +421,9 @@ class PatternController : public MessageReceiver {
         break;
       case ']':
         this->beats->adjust_bpm(1<<8);
+        break;
+      case 's':
+        this->beats->start_phrase();
         break;
 
     }
