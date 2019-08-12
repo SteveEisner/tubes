@@ -127,6 +127,11 @@ class Radio {
 
   bool sendCommand(uint32_t command, void *data=0, uint8_t size=0, TubeId relayId=0)
   {
+    return this->sendCommandFrom(this->tubeId, command, data, size, relayId);
+  }
+
+  bool sendCommandFrom(TubeId id, uint32_t command, void *data=0, uint8_t size=0, TubeId relayId=0)
+  {
     bool sent = 0;
     if (!this->alive)
       return sent;
@@ -138,14 +143,14 @@ class Radio {
       return 0;
     }
   
-    message.tubeId = this->tubeId;
+    message.tubeId = id;
     message.relayId = relayId;
     message.command = command + (RADIO_VERSION << 12);
     memset(message.data, 0, sizeof(message.data));
     memcpy(message.data, data, size);
     uint16_t crc = calculate_crc(message.data, sizeof(message.data));
     message.crc = crc;
-  
+
     Serial.print(F("Sending "));
     Serial.print(message.command, HEX);
     Serial.print(F(" "));
@@ -211,7 +216,7 @@ class Radio {
         return;
       }
 
-      if (message.tubeId > this->masterTubeId) {
+      if (message.tubeId != 255 && message.tubeId > this->masterTubeId) {
         // Found a new master!
         this->masterTubeId = message.tubeId;
         Serial.print(F("All hail new master "));

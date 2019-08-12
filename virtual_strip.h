@@ -67,13 +67,8 @@ class VirtualStrip {
     this->num_leds = num_leds;
   }
 
-  ~VirtualStrip() {
-    destroyParticles(this);
-  }
-
   void load(Animation &animation)
   {
-    destroyParticles(this);
     this->animation = animation;
     this->fade = FadeIn;
     this->fader = 0;
@@ -160,7 +155,7 @@ class VirtualStrip {
         break;  
 
       case Glitter:
-        addGlitter(25, this);
+        addGlitter(25);
         break;
     }
 
@@ -191,21 +186,6 @@ class VirtualStrip {
       else
         strip[i] |= c;
     }
-
-    unsigned int len = particles.length();
-    for (unsigned i=len; i > 0; i--) {
-      Particle *particle = particles[i-1];
-      if (particle->owner != this)
-        continue;
-  
-      uint16_t pos = scale16(particle->position, this->num_leds-1);
-      uint32_t age = particle->age;
-
-      CRGB c = particle->color_at(age);
-      nscale8x3(c.r, c.g, c.b, this->fader>>8);
-      strip[pos] |= c;
-    }
-  
   }
   
   uint8_t beatsin16( uint16_t lowest=0, uint16_t highest=65535 )

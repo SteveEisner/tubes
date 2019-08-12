@@ -187,10 +187,6 @@ class PatternController : public MessageReceiver {
     currentState.bpm = this->beats->bpm;
     currentState.frame = this->beats->frame;
 
-    if (this->graphicsTimer.every(REFRESH_PERIOD)) {
-      this->updateGraphics();
-    }
-
     if (this->isMaster()) {
       if (this->radio->masterTubeId) {
         Serial.println(F("I have no master"));
@@ -199,12 +195,10 @@ class PatternController : public MessageReceiver {
 
       if (this->patternTimer.ended()) {
         this->nextPattern();
-        this->patternTimer.snooze(NEXT_PATTERN_TIME);
       }
   
       if (this->paletteTimer.ended()) {
         this->nextPalette();
-        this->paletteTimer.snooze(NEXT_PALETTE_TIME);
       }
   
       // run periodic timer
@@ -234,6 +228,10 @@ class PatternController : public MessageReceiver {
     }
 
     this->radio->receiveCommands(this);
+
+    if (this->graphicsTimer.every(REFRESH_PERIOD)) {
+      this->updateGraphics();
+    }
 
     if (this->lcd->active) {
       this->lcd->size(1);
@@ -300,6 +298,7 @@ class PatternController : public MessageReceiver {
   void nextPalette() {
     // If we're not in control - don't do anything
     this->setPalette(random8(gGradientPaletteCount));
+    this->paletteTimer.start(NEXT_PALETTE_TIME);
   }
 
   void nextPattern() {
@@ -310,6 +309,10 @@ class PatternController : public MessageReceiver {
       s = All;
     this->startPattern(p, random8(gGradientPaletteCount), s);
     currentState.timer = 0;
+
+    this->patternTimer.start(NEXT_PATTERN_TIME);
+    this->radio->sendCommandFrom(255, COMMAND_FIREWORK, NULL, 0);
+    this->onCommand(0, COMMAND_FIREWORK, NULL);
   }
 
   void updateGraphics() {
@@ -325,6 +328,8 @@ class PatternController : public MessageReceiver {
       vstrip->blend(this->led_strip->leds, this->options.brightness, first);
       first = 0;
     }
+
+    drawParticles(this->led_strip->leds, this->num_leds);    
   }
 
   virtual void onCommand(uint8_t fromId, CommandId command, void *data) {
@@ -337,7 +342,7 @@ class PatternController : public MessageReceiver {
     switch (command) {
       case COMMAND_FIREWORK:
         Serial.println(F("fireworks"));
-        // throwFirework(255);
+        addFlash(255);
         return;
   
       case COMMAND_RESET:
@@ -396,6 +401,7 @@ class PatternController : public MessageReceiver {
         break;
 
       case 'f':
+        this->radio->sendCommandFrom(255, COMMAND_FIREWORK, NULL, 0);
         this->onCommand(0, COMMAND_FIREWORK, NULL);
         break;
 
@@ -414,10 +420,10 @@ class PatternController : public MessageReceiver {
         this->beats->adjust_bpm(-(1<<8));
         break;
       case '{':
-        this->beats->adjust_bpm(-(1<<6));
+        this->beats->adjust_bpm(-(1<<4));
         break;
       case '}':
-        this->beats->adjust_bpm(1<<6);
+        this->beats->adjust_bpm(1<<4);
         break;
       case ']':
         this->beats->adjust_bpm(1<<8);
@@ -426,6 +432,19 @@ class PatternController : public MessageReceiver {
         this->beats->start_phrase();
         break;
 
+      case 'g':
+        addGlitter(255);
+        break;
+      case 'G':
+        addFlash(255);
+        break;
+
+      case 'n':
+        this->nextPattern();
+        break;
+      case 'p':
+        this->nextPalette();
+        break;
     }
   }
 

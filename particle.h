@@ -1,12 +1,17 @@
 #ifndef PARTICLE_H
 #define PARTICLE_H
 
+class Particle;
+
+typedef void (*ParticleFn)(Particle *particle, CRGB strip[], uint8_t num_leds);
+
+extern void drawPoint(Particle *particle, CRGB strip[], uint8_t num_leds);
+extern void drawFlash(Particle *particle, CRGB strip[], uint8_t num_leds);
+
 class Particle {
   const static uint16_t DEFAULT_BRIGHTNESS = (192<<8); // or 96
 
   public:
-    void *owner;
-
     uint32_t born;
     uint32_t lifetime;
     uint32_t age;
@@ -19,8 +24,9 @@ class Particle {
     CRGBPalette16 palette;
     CRGB color;
     uint16_t brightness;
+    ParticleFn drawFn;
 
-  Particle(uint16_t position, CRGB color=CRGB::White, uint32_t lifetime=5000)
+  Particle(uint16_t position, CRGB color=CRGB::White, uint32_t lifetime=5000, ParticleFn drawFn=drawPoint)
   {
     this->born = currentState.frame;
     this->age = 0;
@@ -28,6 +34,7 @@ class Particle {
     this->color = color;
     this->lifetime = lifetime;
     this->brightness = DEFAULT_BRIGHTNESS;
+    this->drawFn = drawFn;
   }
 
   void update(uint32_t frame)
@@ -44,22 +51,6 @@ class Particle {
     return (256 * age) / lifetime;
   }
 
-  CRGB color_at(uint32_t age) {
-    uint8_t age_frac = this->age_frac8(age);
-
-    // Particles get dimmer with age
-    uint8_t brightness = scale8((uint8_t)(this->brightness>>8), 255 - age_frac);
-
-    // a black pattern actually means to use the current palette
-    if (this->color == CRGB(0,0,0))
-      return ColorFromPalette(this->palette, age_frac, brightness);
-
-    uint8_t r = scale8(this->color.r, brightness);
-    uint8_t g = scale8(this->color.g, brightness);
-    uint8_t b = scale8(this->color.b, brightness);
-    return CRGB(r,g,b);
-  }
-  
   uint16_t udelta16(uint16_t x, int16_t dx)
   {
     if (dx > 0 && 65535-x < dx)
@@ -78,7 +69,36 @@ class Particle {
     return x + dx;
   }
 
+  CRGB color_at(uint8_t age_frac) {
+    // Particles get dimmer with age
+    uint8_t brightness = scale8((uint8_t)(this->brightness>>8), 255 - age_frac);
 
+    // a black pattern actually means to use the current palette
+    if (this->color == CRGB(0,0,0))
+      return ColorFromPalette(this->palette, age_frac, brightness);
+
+    uint8_t r = scale8(this->color.r, brightness);
+    uint8_t g = scale8(this->color.g, brightness);
+    uint8_t b = scale8(this->color.b, brightness);
+    return CRGB(r,g,b);
+  }
+  
 };
+
+void drawPoint(Particle *particle, CRGB strip[], uint8_t num_leds) {
+  uint8_t age_frac = particle->age_frac8(particle->age);
+  CRGB c = particle->color_at(age_frac);
+
+  uint16_t pos = scale16(particle->position, num_leds-1);
+  strip[pos] |= c;
+}
+
+void drawFlash(Particle *particle, CRGB strip[], uint8_t num_leds) {
+  uint8_t age_frac = particle->age_frac8(particle->age);
+  CRGB c = particle->color_at(age_frac);
+  for (int pos = 0; pos < num_leds; pos++) {
+    strip[pos] |= c;
+  }
+}
 
 #endif

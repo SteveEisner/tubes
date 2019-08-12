@@ -5,17 +5,25 @@
 
 ustd::array<Particle*> particles = ustd::array<Particle*>(5);
 
-void addGlitter(fract8 chance, void *owner) 
+void addGlitter(fract8 chance) 
 {
   if (random8() >= chance)
     return;
 
-  Particle *particle = new Particle(random16(), CRGB::White, 12);
-  particle->owner = owner;
+  Particle *particle = new Particle(random16(), CRGB::White, 18);
   particles.add(particle);
 }
 
-void addDrop(fract8 chance, void *owner)
+void addFlash(fract8 chance) 
+{
+  if (random8() >= chance)
+    return;
+
+  Particle *particle = new Particle(random16(), CRGB::Blue, 150, drawFlash);
+  particles.add(particle);
+}
+
+void addDrop(fract8 chance)
 {
   if( random8() >= chance)
     return;
@@ -25,7 +33,6 @@ void addDrop(fract8 chance, void *owner)
    Particle *particle = new Particle(65535, color, 90);
    particle->velocity = -500;
    particle->gravity = -10;
-   particle->owner = owner;
    particles.add(particle);
 }
 
@@ -99,20 +106,15 @@ void animateParticles(uint32_t frame) {
       particles.erase(i-1);
       continue;
     }
-
   }
 }
 
-void destroyParticles(void *owner) {
+void drawParticles(CRGB strip[], uint8_t num_leds) {
   unsigned int len = particles.length();
   for (unsigned i=len; i > 0; i--) {
     Particle *particle = particles[i-1];
-    if (particle->owner != owner) {
-      continue;
-    }
-
-    delete particle;
-    particles.erase(i-1);
+    particle->drawFn(particle, strip, num_leds);
   }
 }
+
 #endif
