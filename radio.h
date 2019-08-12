@@ -19,7 +19,7 @@ const static uint8_t PIN_RADIO_MOSI = 11;           // hardware pins
 const static uint8_t PIN_RADIO_MISO = 12;           // hardware pins
 const static uint8_t PIN_RADIO_SCK = 13;            // hardware pins
 
-#define RADIO_BITRATE NRFLite::BITRATE2MBPS         // { BITRATE2MBPS, BITRATE1MBPS, BITRATE250KBPS }
+#define RADIO_BITRATE NRFLite::BITRATE1MBPS         // { BITRATE2MBPS, BITRATE1MBPS, BITRATE250KBPS }
 #define RADIO_CHANNEL 100 + RADIO_VERSION           // Channel hop with each version
 #define RADIO_SENDPERIOD 1000                       // how often we broadcast, in millisec
 
@@ -28,18 +28,19 @@ class Radio;
 typedef uint16_t CommandId;
 typedef uint8_t TubeId;
 
+#define MESSAGE_DATA_MAX_SIZE 25
 typedef struct {
   CommandId command;
   TubeId tubeId;
-  TubeID relayId;
-  byte data[26];
+  TubeId relayId;
+  byte data[MESSAGE_DATA_MAX_SIZE];
   uint16_t crc = 0;
 } RadioMessage;
 
 class MessageReceiver {
   public:
 
-  virtual void onCommandReceived(uint8_t fromId, CommandId command, byte *data) {
+  virtual void onCommand(uint8_t fromId, CommandId command, void *data) {
     // Abstract: subclasses must define
   }
 };
@@ -95,7 +96,7 @@ class Radio {
     unsigned long radioRestarts = 0;
 
   void setup() {
-    this->tubeId = newTubeId();
+    this->resetId();
   
 #ifdef USERADIO
     SPI.setSCK(PIN_RADIO_SCK);
@@ -111,11 +112,20 @@ class Radio {
 #endif
   }
 
+  void resetId() {
+    this->tubeId = newTubeId();
+    Serial.print(F("My ID is "));
+    Serial.println(this->tubeId);
+
+    if (this->tubeId > this->masterTubeId)
+      this->masterTubeId = 0;
+  }
+
   bool isMaster() {
     return this->tubeId >= this->masterTubeId;
   }
 
-  bool sendCommand(uint32_t command, void *data=0, uint8_t size=0)
+  bool sendCommand(uint32_t command, void *data=0, uint8_t size=0, TubeId relayId=0)
   {
     bool sent = 0;
     if (!this->alive)
@@ -129,7 +139,7 @@ class Radio {
     }
   
     message.tubeId = this->tubeId;
-    message.relayId = 0;
+    message.relayId = relayId;
     message.command = command + (RADIO_VERSION << 12);
     memset(message.data, 0, sizeof(message.data));
     memcpy(message.data, data, size);
@@ -170,6 +180,10 @@ class Radio {
       if ((message.command>>12) != RADIO_VERSION)
         return;
 
+      // Ignore relayed messages if we already have a master
+      if (message.relayId && message.relayId <= this->masterTubeId)
+        return;
+
       // Filter out corrupt messages
       unsigned long crc = calculate_crc(message.data, sizeof(message.data));
       if (crc != message.crc) {
@@ -183,26 +197,42 @@ class Radio {
 
       // If we detect an ID collision, fix it by choosing a new random one
       while (message.tubeId == this->tubeId) {
-        Serial.println(F("ID collision!"));
-        this->tubeId = newTubeId();
+        Serial.print(F("ID collision!"));
+        this->resetId();
       }
 
       // Ignore messages from a lower ID
       if (message.tubeId < this->tubeId) {
-        Serial.print(F("Ignoring message from "));
-        Serial.println(message.tubeId);
+        // Don't need to be noisy about relayed messages
+        if (message.relayId == 0) {
+          Serial.print(F("Ignoring message from "));
+          Serial.println(message.tubeId);
+        }
         return;
       }
 
       if (message.tubeId > this->masterTubeId) {
         // Found a new master!
-        masterTubeId = message.tubeId;
+        this->masterTubeId = message.tubeId;
         Serial.print(F("All hail new master "));
-        Serial.println(masterTubeId);
+        Serial.println(this->masterTubeId);
       }  
 
       // Process the command
-      receiver->onCommandReceived(message.tubeId, message.command & 0xFFF, message.data);
+      Serial.print(message.tubeId);
+      Serial.print(" ");
+      Serial.println(message.command & 0xFFF, HEX);
+      receiver->onCommand(message.tubeId, message.command & 0xFFF, message.data);
+
+      // Occcasionally relay commands - more frequently if higher ID
+      uint8_t r = random8();
+      if ((r % 3 == 0) && r < this->tubeId) {
+        Serial.print(F("Relaying from "));
+        Serial.println(this->tubeId);
+        message.relayId = message.tubeId;
+        message.tubeId = this->tubeId;
+        _radio.send(RADIO_TX_ID, &message, sizeof(message), NRFLite::NO_ACK);
+      }
     }
 #endif
   }

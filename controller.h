@@ -20,11 +20,14 @@ EasyButton button2(BUTTON_PIN_2);
 EasyButton button3(BUTTON_PIN_3);
 EasyButton button4(BUTTON_PIN_4);
 
+const static uint8_t DEFAULT_BRIGHTNESS = 144;
+
 const static CommandId COMMAND_UPDATE = 0x411;
 const static CommandId COMMAND_RESET = 0x911;
 const static CommandId COMMAND_FIREWORK = 0x321;
 const static CommandId COMMAND_HELLO = 0x000;
 const static CommandId COMMAND_OPTIONS = 0x123;
+const static CommandId COMMAND_BRIGHTNESS = 0x888;
 
 void onButton1Pressed()
 {
@@ -70,6 +73,7 @@ AnimationFn gPatterns[] = {
 
 typedef struct {
   bool debugging;
+  uint8_t brightness;
 } ControllerOptions;
 
 uint8_t gPatternsCount = ARRAY_SIZE( gPatterns );
@@ -85,6 +89,7 @@ class PatternController : public MessageReceiver {
     const static int REFRESH_PERIOD = 1000 / FRAMES_PER_SECOND;  // how often we animate, in milliseconds
 
     uint8_t num_leds;
+    uint8_t brightness;
     VirtualStrip *vstrips[NUM_VSTRIPS];
     uint8_t next_vstrip = 0;
     
@@ -119,6 +124,7 @@ class PatternController : public MessageReceiver {
   void setup()
   {
     this->options.debugging = 1;
+    this->options.brightness = DEFAULT_BRIGHTNESS;
     
     this->lcd->setup();
     this->led_strip->setup();
@@ -143,6 +149,12 @@ class PatternController : public MessageReceiver {
 
     this->slaveTimer.start(RADIO_SENDPERIOD * 3); // Assume we're a slave at first, just listen for a master.
     this->updateTimer.start(RADIO_SENDPERIOD); // Ready to send an update as soon as we're able to
+  }
+
+  void setBrightness(uint8_t brightness) {
+    Serial.print(F("brightness "));
+    Serial.println(brightness);
+    this->options.brightness = brightness;
   }
 
   void update()
@@ -170,6 +182,8 @@ class PatternController : public MessageReceiver {
         this->radio->sendCommand(COMMAND_OPTIONS, &this->options, sizeof(this->options));
       }
 #endif
+
+    this->readSerial();
 
     currentState.bpm = this->beats->bpm;
     currentState.frame = this->beats->frame;
@@ -311,18 +325,17 @@ class PatternController : public MessageReceiver {
         continue;
 
       vstrip->update(currentState.frame);
-      vstrip->blend(this->led_strip->leds, first);
+      vstrip->blend(this->led_strip->leds, first, this->brightness);
       first = 0;
     }
   }
 
-  virtual void onCommandReceived(uint8_t fromId, CommandId command, byte *data) {
-    // Track the last time we received a message from our master
-    this->slaveTimer.start(RADIO_SENDPERIOD * 8);
-
-    Serial.print(F("From "));
-    Serial.print(fromId);
-    Serial.print(F(": "));
+  virtual void onCommand(uint8_t fromId, CommandId command, void *data) {
+    if (fromId) {
+      Serial.print(F("From "));
+      Serial.print(fromId);
+      Serial.print(F(": "));
+    }
     
     switch (command) {
       case COMMAND_FIREWORK:
@@ -334,6 +347,12 @@ class PatternController : public MessageReceiver {
         Serial.println(F("reset"));
         return;
   
+      case COMMAND_BRIGHTNESS: {
+        uint8_t *bright = (uint8_t *)data;
+        this->setBrightness(*bright);
+        return;
+      }
+  
       case COMMAND_HELLO:
         Serial.println(F("hello"));
         return;
@@ -344,7 +363,7 @@ class PatternController : public MessageReceiver {
         return;
       }
   
-      case COMMAND_UPDATE:
+      case COMMAND_UPDATE: {
         TubeState state;
         memcpy(&state, data, sizeof(TubeState));
         printState(&state);
@@ -354,15 +373,60 @@ class PatternController : public MessageReceiver {
           return;
         } 
         Serial.println(F(" (obeying)"));
-  
+
+        // Track the last time we received a message from our master
+        this->slaveTimer.start(RADIO_SENDPERIOD * 8);
+
         this->startPattern(state.pattern, state.palette_id, (SyncMode)state.sync);
         this->beats->sync(state.bpm, state.frame);
         currentState = state;    
         return;
+      }
     }
   
     Serial.print(F("UNKNOWN "));
     Serial.println(command, HEX);
+  }
+
+  void readSerial() {
+    if (!Serial.available())
+      return;
+      
+    char c = Serial.read();
+    switch (c) {
+      case 'd':
+        this->options.debugging = !this->options.debugging;
+        break;
+
+      case 'f':
+        this->onCommand(0, COMMAND_FIREWORK, NULL);
+        break;
+
+      case 'i':
+        this->radio->resetId();
+        break;
+
+      case '-':
+        this->setBrightness(this->options.brightness - 5);
+        break;
+      case '+':
+        this->setBrightness(this->options.brightness + 5);
+        break;
+        
+      case '[':
+        this->beats->adjust_bpm(-(1<<8));
+        break;
+      case '{':
+        this->beats->adjust_bpm(-(1<<6));
+        break;
+      case '}':
+        this->beats->adjust_bpm(1<<6);
+        break;
+      case ']':
+        this->beats->adjust_bpm(1<<8);
+        break;
+
+    }
   }
 
 };

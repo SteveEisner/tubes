@@ -43,6 +43,11 @@ class BeatController {
   void set_bpm(accum88 bpm) {
     this->sync(bpm, 0/*this->frame*/);
   }
+
+  void adjust_bpm(saccum78 bpm) {
+    this->sync(this->bpm + bpm, this->frame);
+  }
+
 };
 
 #endif

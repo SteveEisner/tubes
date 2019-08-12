@@ -6,6 +6,7 @@
 #include "led_strip.h"
 
 #define DEFAULT_FADE_SPEED 100
+#define DEFAULT_VSTRIP_BRIGHTNESS 100
 
 class VirtualStrip;
 typedef void (*AnimationFn)(VirtualStrip *strip);
@@ -42,8 +43,6 @@ uint32_t swing(uint32_t frame) {
 }
 
 class VirtualStrip {
-  const static uint16_t DEFAULT_BRIGHTNESS = 144;
-
   public:
     CRGB leds[MAX_LEDS];
     uint8_t num_leds;
@@ -78,7 +77,7 @@ class VirtualStrip {
     this->fade = FadeIn;
     this->fader = 0;
     this->fade_speed = animation.fade_speed;
-    this->brightness = DEFAULT_BRIGHTNESS;
+    this->brightness = DEFAULT_VSTRIP_BRIGHTNESS;
   }
 
   void fadeOut(uint8_t fade_speed=DEFAULT_FADE_SPEED)
@@ -122,7 +121,7 @@ class VirtualStrip {
         break;
 
       case Pulse:
-        this->brightness = scale8(beatsin8( 10 ), 128) + 64;
+        this->brightness = scale8(beatsin8( 10 ), 128) + 128;
         break;
     }
 
@@ -176,13 +175,15 @@ class VirtualStrip {
     return CHSV(this->hue + offset, saturation, value);
   }
 
-  void blend(CRGB strip[], bool overwrite=0) {
+  void blend(CRGB strip[], uint8_t brightness, bool overwrite=0) {
     if (this->fade == Dead)
       return;
 
+    brightness = this->brightness; // mul8(brightness, this->brightness);
+    
     for (unsigned i=0; i < this->num_leds; i++) {
       CRGB c = this->leds[i];
-      nscale8x3(c.r, c.g, c.b, this->brightness);
+      nscale8x3(c.r, c.g, c.b, brightness);
       nscale8x3(c.r, c.g, c.b, this->fader>>8);
       if (overwrite)
         strip[i] = c;

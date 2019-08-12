@@ -38,6 +38,10 @@ class Timer {
     this->endTime = globalTimer.now_millis + duration_ms;
   }
 
+  void stop() {
+    this->start(0);
+  }
+
   void snooze(uint32_t duration_ms) {
     this->endTime += duration_ms;
   }
