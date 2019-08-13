@@ -152,12 +152,6 @@ class PatternController : public MessageReceiver {
     this->updateTimer.start(RADIO_SENDPERIOD); // Ready to send an update as soon as we're able to
   }
 
-  void setBrightness(uint8_t brightness) {
-    Serial.print(F("brightness "));
-    Serial.println(brightness);
-    this->options.brightness = brightness;
-  }
-
   void update()
   {
     currentState.timer += globalTimer.delta_millis;
@@ -256,6 +250,25 @@ class PatternController : public MessageReceiver {
     this->setPattern(pattern_id, palette_id, sync);
   }
 
+  void optionsChanged() {
+#ifdef MASTERCONTROL
+    this->radio->sendCommand(COMMAND_OPTIONS, &options, sizeof(options));
+#endif
+  }
+
+  void setBrightness(uint8_t brightness) {
+    Serial.print(F("brightness "));
+    Serial.println(brightness);
+
+    this->options.brightness = brightness;
+    this->optionsChanged();
+  }
+
+  void setDebugging(bool debugging) {
+    this->options.debugging = debugging;
+    this->optionsChanged();
+  }
+  
   void setPattern(uint8_t pattern_id, uint8_t palette_id, SyncMode sync) {
     currentState.pattern = pattern_id;
     currentState.palette_id = palette_id;
@@ -313,8 +326,6 @@ class PatternController : public MessageReceiver {
     currentState.timer = 0;
 
     this->patternTimer.start(NEXT_PATTERN_TIME);
-    this->radio->sendCommandFrom(255, COMMAND_FIREWORK, NULL, 0);
-    this->onCommand(0, COMMAND_FIREWORK, NULL);
   }
 
   void updateGraphics() {
@@ -334,6 +345,10 @@ class PatternController : public MessageReceiver {
     drawParticles(this->led_strip->leds, this->num_leds);    
   }
 
+  virtual void acknowledge() {
+    addFlash(255);
+  }
+
   virtual void onCommand(uint8_t fromId, CommandId command, void *data) {
     if (fromId) {
       Serial.print(F("From "));
@@ -344,7 +359,7 @@ class PatternController : public MessageReceiver {
     switch (command) {
       case COMMAND_FIREWORK:
         Serial.println(F("fireworks"));
-        addFlash(255);
+        this->acknowledge();
         return;
   
       case COMMAND_RESET:
@@ -364,6 +379,7 @@ class PatternController : public MessageReceiver {
       case COMMAND_OPTIONS: {
         Serial.println(F("options"));
         memcpy(&this->options, data, sizeof(this->options));
+        this->acknowledge();
         return;
       }
   
@@ -398,10 +414,6 @@ class PatternController : public MessageReceiver {
       
     char c = Serial.read();
     switch (c) {
-      case 'd':
-        this->options.debugging = !this->options.debugging;
-        break;
-
       case 'f':
         this->radio->sendCommandFrom(255, COMMAND_FIREWORK, NULL, 0);
         this->onCommand(0, COMMAND_FIREWORK, NULL);
@@ -411,6 +423,9 @@ class PatternController : public MessageReceiver {
         this->radio->resetId();
         break;
 
+      case 'd': 
+        this->setDebugging(!this->options.debugging);
+        break;
       case '-':
         this->setBrightness(this->options.brightness - 5);
         break;
