@@ -24,7 +24,6 @@
 
 #endif
 
-#include "timer.h"
 #include "beats.h"
 #include "global_state.h"
 #include "virtual_strip.h"
@@ -59,12 +58,14 @@ void setup() {
 
 void loop()
 {
+  EVERY_N_MILLISECONDS( 1000 ) {
+    randomize(random());
+  }
+
   beats.update(); // ~30us
   controller.update(); // radio: 0-3000us   patterns: 0-3000us   lcd: ~50000us
   debug.update(); // ~25us
-  controller.led_strip->update(); // ~25us
 
-  EVERY_N_MILLISECONDS( 1000 ) {
-    randomize(globalTimer.now_micros + random());
-  }
+  // Draw after everything else is done
+  controller.led_strip->update(); // ~25us
 }

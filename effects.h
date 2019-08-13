@@ -3,14 +3,16 @@
 
 #include "particle.h"
 
+
 ustd::array<Particle*> particles = ustd::array<Particle*>(5);
+
 
 void addGlitter(fract8 chance) 
 {
   if (random8() >= chance)
     return;
 
-  Particle *particle = new Particle(random16(), CRGB::White, 18);
+  Particle *particle = new Particle(random16(), CRGB::White, 128);
   particles.add(particle);
 }
 
@@ -19,7 +21,7 @@ void addFlash(fract8 chance)
   if (random8() >= chance)
     return;
 
-  Particle *particle = new Particle(random16(), CRGB::Blue, 150, drawFlash);
+  Particle *particle = new Particle(random16(), CRGB::Blue, 512, drawFlash);
   particles.add(particle);
 }
 
@@ -30,7 +32,7 @@ void addDrop(fract8 chance)
 
    uint8_t hue = random8();
    CRGB color = CHSV(hue, 255, 255);
-   Particle *particle = new Particle(65535, color, 90);
+   Particle *particle = new Particle(65535, color, 360);
    particle->velocity = -500;
    particle->gravity = -10;
    particles.add(particle);
@@ -95,7 +97,7 @@ void throwFirework(fract8 chance)
 
 #endif
 
-void animateParticles(uint32_t frame) {
+void animateParticles(BeatFrame_24_8 frame) {
   unsigned int len = particles.length();
   for (unsigned i=len; i > 0; i--) {
     Particle *particle = particles[i-1];

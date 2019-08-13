@@ -47,7 +47,7 @@ class DebugController {
     if (!this->controller->options.debugging)
       return;
 
-    uint32_t frame = currentState.frame % (64 * 32);
+    uint32_t frame = currentState.beat_frame % (32 * 256);
     if (frame == 0 && this->lastFrame != 0) {
       uint32_t t = globalTimer.now_micros;
       Serial.print(t - this->lastPhraseTime);
@@ -57,7 +57,7 @@ class DebugController {
     }
     this->lastFrame = frame;
     
-    uint8_t p1 = (currentState.frame >> 6) % 16;
+    uint8_t p1 = (currentState.beat_frame >> 8) % 16;
     this->strip->leds[p1] = CRGB::White;
 
     uint8_t p2 = scale8(this->controller->radio->tubeId, this->strip->num_leds-1);

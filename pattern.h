@@ -35,7 +35,7 @@ void solidBlue(VirtualStrip *strip)
 
 void confetti(VirtualStrip *strip) 
 {
-  strip->darken(10);
+  strip->darken(8);
   
   int pos = random16(strip->num_leds);
   strip->leds[pos] += strip->palette_color(random8(64), strip->hue);
@@ -69,7 +69,7 @@ void sinelon(VirtualStrip *strip)
   // a colored dot sweeping back and forth, with fading trails
   strip->darken(30);
 
-  int pos = scale16(sin16( strip->frame << 7 ) + 32768, strip->num_leds-1);   // beatsin16 re-implemented
+  int pos = scale16(sin16( strip->frame << 5 ) + 32768, strip->num_leds-1);   // beatsin16 re-implemented
   strip->leds[pos] += strip->hue_color();
 }
 
@@ -78,8 +78,8 @@ void bpm(VirtualStrip *strip)
   // colored stripes pulsing at a defined Beats-Per-Minute (BPM)
   CRGBPalette16 palette = PartyColors_p;
 
-  uint8_t beat = strip->beatsin16(64, 255);
-  for( int i = 0; i < strip->num_leds; i++) {
+  uint8_t beat = strip->bpm_sin16(64, 255);
+  for (int i = 0; i < strip->num_leds; i++) {
     strip->leds[i] = ColorFromPalette(palette, strip->hue+(i*2), beat-strip->hue+(i*10));
   }
 }
@@ -121,7 +121,7 @@ void fillnoise8(uint32_t frame, uint8_t num_leds) {
 void drawNoise(VirtualStrip *strip)
 {
   // generate noise data
-  fillnoise8(strip->frame, strip->num_leds);
+  fillnoise8(strip->frame >> 2, strip->num_leds);
 
   for(int i = 0; i < strip->num_leds; i++) {
     CRGB color = strip->palette_color(noise[i], strip->hue);

@@ -1,12 +1,14 @@
 #ifndef CONTROLLER_H
 #define CONTROLLER_H
 
-#include <EasyButton.h>
+#include "beats.h"
 #include "pattern.h"
 #include "palette.h"
 #include "led_strip.h"
 #include "lcd.h"
 #include "radio.h"
+
+#include <EasyButton.h>
 
 #define X_AXIS_PIN 20
 #define Y_AXIS_PIN 21
@@ -92,11 +94,11 @@ class PatternController : public MessageReceiver {
     VirtualStrip *vstrips[NUM_VSTRIPS];
     uint8_t next_vstrip = 0;
     
-    Timer patternTimer;
-    Timer paletteTimer;
-    Timer graphicsTimer;
-    Timer updateTimer;
-    Timer slaveTimer;
+    BeatTimer patternTimer;
+    BeatTimer paletteTimer;
+    BeatTimer graphicsTimer;
+    BeatTimer updateTimer;
+    BeatTimer slaveTimer;
 
     Lcd *lcd;
     LEDs *led_strip;
@@ -185,7 +187,7 @@ class PatternController : public MessageReceiver {
     this->readSerial();
 
     currentState.bpm = this->beats->bpm;
-    currentState.frame = this->beats->frame;
+    currentState.beat_frame = this->beats->frac;
 
     if (this->isMaster()) {
       if (this->radio->masterTubeId) {
@@ -235,7 +237,7 @@ class PatternController : public MessageReceiver {
 
     if (this->lcd->active) {
       this->lcd->size(1);
-      this->lcd->write(0,56, currentState.frame);
+      this->lcd->write(0,56, currentState.beat_frame);
       this->lcd->write(80,56, this->x_axis);
       this->lcd->write(100,56, this->y_axis);
       this->lcd->show();
@@ -316,7 +318,7 @@ class PatternController : public MessageReceiver {
   }
 
   void updateGraphics() {
-    animateParticles(currentState.frame);
+    animateParticles(currentState.beat_frame);
 
     bool first = 1;
     for (uint8_t i=0; i < NUM_VSTRIPS; i++) {
@@ -324,7 +326,7 @@ class PatternController : public MessageReceiver {
       if (vstrip->fade == Dead)
         continue;
 
-      vstrip->update(currentState.frame);
+      vstrip->update(currentState.beat_frame);
       vstrip->blend(this->led_strip->leds, this->options.brightness, first);
       first = 0;
     }
@@ -380,7 +382,7 @@ class PatternController : public MessageReceiver {
         this->slaveTimer.start(RADIO_SENDPERIOD * 8);
 
         this->startPattern(state.pattern, state.palette_id, (SyncMode)state.sync);
-        this->beats->sync(state.bpm, state.frame);
+        this->beats->sync(state.bpm, state.beat_frame);
         currentState = state;    
         return;
       }

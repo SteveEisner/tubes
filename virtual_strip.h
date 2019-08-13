@@ -31,14 +31,14 @@ typedef enum VirtualStripFade {
   Dead=99,
 } VirtualStripFade;
 
-uint32_t swing(uint32_t frame) {
-  fract8 fr = (frame & 0xFF);
-  if (fr < 64)
-    fr = ease8InOutApprox(fr << 2);
+BeatFrame_24_8 swing(BeatFrame_24_8 frame) {
+  uint16_t fr = (frame & 0x3FF); // grab 4 beats
+  if (fr < 256)
+    fr = ease8InOutApprox(fr) << 2;
   else
-    fr = 255;
+    fr = 0x3FF;
   
-  return (frame & 0xFF00) + fr;
+  return (frame & 0xFC00) + fr;  // recompose it
 }
 
 class VirtualStrip {
@@ -58,7 +58,7 @@ class VirtualStrip {
     Animation animation;
     uint32_t frame;
     uint8_t beat;
-    uint16_t beat16;
+    uint16_t beat16;  // 8 bits of beat and 8 bits of fractional
     uint8_t hue;
 
   VirtualStrip(uint8_t num_leds=MAX_LEDS)
@@ -94,7 +94,7 @@ class VirtualStrip {
     fill_solid( this->leds, this->num_leds, crgb);
   }
 
-  void update(uint32_t frame)
+  void update(BeatFrame_24_8 frame)
   {
     if (this->fade == Dead)
       return;
@@ -105,21 +105,28 @@ class VirtualStrip {
         break;  
 
       case SinDrift:
-        this->frame = frame + beatsin8( 5 );
+        // Drift slightly
+        this->frame = frame + (beatsin16( 5 ) >> 6);
         break;
 
       case Swing:
+        // Swing the beat
         this->frame = swing(frame);
         break;
 
       case SwingDrift:
-        this->frame = swing(frame) + beatsin8( 5 );
+        // Swing the beat AND drift slightly
+        this->frame = swing(frame) + (beatsin16( 5 ) >> 6);
         break;
 
       case Pulse:
-        this->brightness = scale8(beatsin8( 10 ), 128) + 64;
+        // Pulsing from 30 - 210 brightness
+        this->brightness = scale8(beatsin8( 10 ), 180) + 30;
         break;
     }
+    this->beat16 = (this->frame << 8);
+    this->beat = (this->frame >> 8) % 16;
+    this->hue = (this->frame >> 4) % 256;
 
     switch (this->fade) {
       case Steady:
@@ -145,10 +152,6 @@ class VirtualStrip {
         }
         break;
     }
-
-    this->beat16 = (this->frame << 9);  // should be 10, but halving it...
-    this->beat = (this->frame >> 6) % 16; // 64 frames per beat
-    this->hue = (this->frame >> 2) % 256;
 
     switch (this->animation.effect) {
       case None:
@@ -188,9 +191,9 @@ class VirtualStrip {
     }
   }
   
-  uint8_t beatsin16( uint16_t lowest=0, uint16_t highest=65535 )
+  uint8_t bpm_sin16( uint16_t lowest=0, uint16_t highest=65535 )
   {
-    uint16_t beatsin = sin16( this->beat16 ) + 32768;
+    uint16_t beatsin = sin16( this->beat16 >> 1 ) + 32768;
     uint16_t rangewidth = highest - lowest;
     uint16_t scaledbeat = scale16( beatsin, rangewidth );
     uint16_t result = lowest + scaledbeat;

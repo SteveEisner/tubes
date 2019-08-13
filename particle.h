@@ -8,13 +8,14 @@ typedef void (*ParticleFn)(Particle *particle, CRGB strip[], uint8_t num_leds);
 extern void drawPoint(Particle *particle, CRGB strip[], uint8_t num_leds);
 extern void drawFlash(Particle *particle, CRGB strip[], uint8_t num_leds);
 
+
 class Particle {
   const static uint16_t DEFAULT_BRIGHTNESS = (192<<8); // or 96
 
   public:
-    uint32_t born;
-    uint32_t lifetime;
-    uint32_t age;
+    BeatFrame_24_8 born;
+    BeatFrame_24_8 lifetime;
+    BeatFrame_24_8 age;
 
     uint16_t position = 0;
     int16_t velocity = 0;
@@ -26,9 +27,9 @@ class Particle {
     uint16_t brightness;
     ParticleFn drawFn;
 
-  Particle(uint16_t position, CRGB color=CRGB::White, uint32_t lifetime=5000, ParticleFn drawFn=drawPoint)
+  Particle(uint16_t position, CRGB color=CRGB::White, uint32_t lifetime=20000, ParticleFn drawFn=drawPoint)
   {
-    this->born = currentState.frame;
+    this->born = currentState.beat_frame;
     this->age = 0;
     this->position = position;
     this->color = color;
@@ -37,14 +38,14 @@ class Particle {
     this->drawFn = drawFn;
   }
 
-  void update(uint32_t frame)
+  void update(BeatFrame_24_8 frame)
   {
     this->age = frame - this->born;
     this->position = this->udelta16(this->position, this->velocity);
     this->velocity = this->delta16(this->velocity, this->gravity);
   }
 
-  uint8_t age_frac8(uint32_t age)
+  uint8_t age_frac8(BeatFrame_24_8 age)
   {
     if (age >= this->lifetime)
       return 255;
