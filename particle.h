@@ -22,7 +22,10 @@ class Particle {
     int16_t gravity = 0;
     void (*die_fn)(Particle *particle) = NULL;
 
-    CRGBPalette16 palette;
+#ifdef PARTICLE_PALETTES
+    CRGBPalette16 palette;   // 48 bytes per particle!?
+#endif
+
     CRGB color;
     uint16_t brightness;
     ParticleFn drawFn;
@@ -74,9 +77,11 @@ class Particle {
     // Particles get dimmer with age
     uint8_t brightness = scale8((uint8_t)(this->brightness>>8), 255 - age_frac);
 
+#ifdef PARTICLE_PALETTES
     // a black pattern actually means to use the current palette
     if (this->color == CRGB(0,0,0))
       return ColorFromPalette(this->palette, age_frac, brightness);
+#endif
 
     uint8_t r = scale8(this->color.r, brightness);
     uint8_t g = scale8(this->color.g, brightness);
@@ -85,6 +90,18 @@ class Particle {
   }
   
 };
+
+ustd::array<Particle*> particles = ustd::array<Particle*>(5);
+
+void addParticle(Particle *particle) {
+  particles.add(particle);
+  if (particles.length() > 20) {
+    Particle *old_particle = particles[0];
+    delete old_particle;
+    particles.erase(0);
+  }
+}
+
 
 void drawPoint(Particle *particle, CRGB strip[], uint8_t num_leds) {
   uint8_t age_frac = particle->age_frac8(particle->age);

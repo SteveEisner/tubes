@@ -1,7 +1,6 @@
 #ifndef VIRTUAL_STRIP_H
 #define VIRTUAL_STRIP_H
 
-#include <FastLED.h>
 #include "effects.h"
 #include "led_strip.h"
 

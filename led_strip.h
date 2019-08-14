@@ -1,8 +1,6 @@
 #ifndef LED_STRIP_H
 #define LED_STRIP_H
 
-#include <FastLED.h>
-
 FASTLED_USING_NAMESPACE
 
 #if defined(FASTLED_VERSION) && (FASTLED_VERSION < 3001000)

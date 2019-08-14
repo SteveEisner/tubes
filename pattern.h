@@ -9,7 +9,7 @@ void rainbow(VirtualStrip *strip)
 {
   // FastLED's built-in rainbow generator
   fill_rainbow( strip->leds, strip->num_leds, strip->hue, 7);
-  if (currentState.timer > 30000)
+  if (currentState.timer > 20000)
     addGlitter(40);
 }
 

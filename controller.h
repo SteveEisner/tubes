@@ -31,25 +31,6 @@ const static CommandId COMMAND_HELLO = 0x000;
 const static CommandId COMMAND_OPTIONS = 0x123;
 const static CommandId COMMAND_BRIGHTNESS = 0x888;
 
-void onButton1Pressed()
-{
-  Serial.println(F("button 1 pressed"));
-}
-
-void onButton2Pressed()
-{
-  Serial.println(F("button 2 pressed"));
-}
-
-void onButton3Pressed()
-{
-  Serial.println(F("button 3 pressed"));
-}
-
-void onButton4Pressed()
-{
-  Serial.println(F("button 4 pressed"));
-}
 
 // List of patterns to cycle through.  Each is defined as a separate function below.
 AnimationFn gPatterns[] = { 
@@ -63,7 +44,6 @@ AnimationFn gPatterns[] = {
   drawNoise, 
   confetti, 
   drawNoise, 
-//  sinelon, 
   juggle, 
   drawNoise,
   confetti,
@@ -139,10 +119,6 @@ class PatternController : public MessageReceiver {
     button2.begin();
     button3.begin();
     button4.begin();
-    button1.onPressed(onButton1Pressed);
-    button2.onPressed(onButton2Pressed);
-    button3.onPressed(onButton3Pressed);
-    button4.onPressed(onButton4Pressed);
     Serial.println(F("Controls: ok"));
 
     this->radio->setup();
@@ -160,6 +136,23 @@ class PatternController : public MessageReceiver {
     button2.read();
     button3.read();
     button4.read();
+
+    button1.read();
+    if (button1.isPressed()) {
+      this->onButton(1);
+    }
+    button2.read();
+    if (button2.isPressed()) {
+      this->onButton(2);
+    }
+    button1.read();
+    if (button1.isPressed()) {
+      this->onButton(3);
+    }
+    button1.read();
+    if (button1.isPressed()) {
+      this->onButton(4);
+    }
 
  #ifdef USEJOYSTICK
     this->x_axis = analogRead(X_AXIS_PIN) >> 3;
@@ -209,9 +202,9 @@ class PatternController : public MessageReceiver {
         if (this->radio->sendCommand(COMMAND_UPDATE, &currentState, sizeof(currentState))) {
           this->radio->radioFailures = 0;
           if (currentState.timer < RADIO_SENDPERIOD) {
-            this->updateTimer.start(RADIO_SENDPERIOD / 4);
+            this->updateTimer.snooze(RADIO_SENDPERIOD / 4);
           } else {
-            this->updateTimer.start(RADIO_SENDPERIOD);
+            this->updateTimer.snooze(RADIO_SENDPERIOD);
           }
         } else {
           // might have been a collision.  Back off by a small amount determined by ID
@@ -240,6 +233,15 @@ class PatternController : public MessageReceiver {
       this->lcd->show();
 
       this->lcd->update();
+    }
+  }
+
+  void onButton(uint8_t button) {
+    if (button == 1) {
+      Serial.print(F("Button "));
+      Serial.println(button);
+      this->radio->sendCommand(COMMAND_FIREWORK, NULL, 0);
+      return;
     }
   }
 

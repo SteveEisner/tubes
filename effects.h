@@ -4,16 +4,12 @@
 #include "particle.h"
 
 
-ustd::array<Particle*> particles = ustd::array<Particle*>(5);
-
-
 void addGlitter(fract8 chance) 
 {
   if (random8() >= chance)
     return;
 
-  Particle *particle = new Particle(random16(), CRGB::White, 128);
-  particles.add(particle);
+  addParticle(new Particle(random16(), CRGB::White, 128));
 }
 
 void addFlash(fract8 chance) 
@@ -21,8 +17,7 @@ void addFlash(fract8 chance)
   if (random8() >= chance)
     return;
 
-  Particle *particle = new Particle(random16(), CRGB::Blue, 512, drawFlash);
-  particles.add(particle);
+  addParticle(new Particle(random16(), CRGB::Blue, 512, drawFlash));
 }
 
 void addDrop(fract8 chance)
@@ -35,7 +30,7 @@ void addDrop(fract8 chance)
    Particle *particle = new Particle(65535, color, 360);
    particle->velocity = -500;
    particle->gravity = -10;
-   particles.add(particle);
+   addParticle(particle);
 }
 
 
@@ -49,9 +44,9 @@ void addFireworkAt(uint16_t pos, CRGB color)
   p1->velocity = 0;
   p2->velocity = 40 + random8(40);
   p3->velocity = -40 - random8(40);
-  particles.add(p1);
-  particles.add(p2);
-  particles.add(p3);
+  addParticle(p1);
+  addParticle(p2);
+  addParticle(p3);
 
   for (int i=0; i<20; i++)
   {
@@ -62,7 +57,7 @@ void addFireworkAt(uint16_t pos, CRGB color)
       p->velocity = -2 * vel;
     else
       p->velocity = 2 * (vel - 128);
-    particles.add(p);
+    addParticle(p);
   }
 }
 
@@ -92,7 +87,7 @@ void throwFirework(fract8 chance)
   particle->velocity = 700 + random16(250);
   particle->gravity = -10;
   particle->die_fn = explode;
-  particles.add(particle);
+  addParticle(particle);
 }
 
 #endif

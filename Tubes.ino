@@ -1,12 +1,11 @@
 #include <Arduino.h>
 #include <array.h>
 #include <avr/pgmspace.h>
+#include "util.h"
 
 #include <WS2812Serial.h>
 #define USE_WS2812SERIAL
 #include <FastLED.h>
-
-#define ARRAY_SIZE(A) (sizeof(A) / sizeof((A)[0]))
 
 // #define MASTERCONTROL
 
