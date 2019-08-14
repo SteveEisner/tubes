@@ -30,4 +30,34 @@ class GlobalTimer {
 
 GlobalTimer globalTimer;
 
+
+
+class Timer {
+  public:
+    uint32_t endTime;
+
+  void start(uint32_t duration_ms) {
+    this->endTime = globalTimer.now_millis + duration_ms;
+  }
+
+  void stop() {
+    this->start(0);
+  }
+
+  void snooze(uint32_t duration_ms) {
+    this->endTime += duration_ms;
+  }
+
+  bool ended() {
+    return globalTimer.now_millis > this->endTime;
+  }
+
+  bool every(uint32_t duration_ms) {
+    if (!this->ended())
+      return 0;
+    this->snooze(duration_ms);
+    return 1;
+  }
+};
+
 #endif

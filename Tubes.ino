@@ -51,6 +51,7 @@ void setup() {
   randomize(analogRead(0));
 
   // Start timing
+  globalTimer.setup();
   beats.setup();
   controller.setup();
   debug.setup();

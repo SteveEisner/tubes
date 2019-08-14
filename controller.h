@@ -94,11 +94,11 @@ class PatternController : public MessageReceiver {
     VirtualStrip *vstrips[NUM_VSTRIPS];
     uint8_t next_vstrip = 0;
     
-    BeatTimer patternTimer;
-    BeatTimer paletteTimer;
-    BeatTimer graphicsTimer;
-    BeatTimer updateTimer;
-    BeatTimer slaveTimer;
+    Timer patternTimer;
+    Timer paletteTimer;
+    Timer graphicsTimer;
+    Timer updateTimer;
+    Timer slaveTimer;
 
     Lcd *lcd;
     LEDs *led_strip;
@@ -182,6 +182,7 @@ class PatternController : public MessageReceiver {
 
     currentState.bpm = this->beats->bpm;
     currentState.beat_frame = this->beats->frac;
+    uint8_t beat = this->beats->frac >> 8;
 
     if (this->isMaster()) {
       if (this->radio->masterTubeId) {
@@ -189,10 +190,12 @@ class PatternController : public MessageReceiver {
         this->radio->masterTubeId = 0;
       }
 
-      if (this->patternTimer.ended()) {
+      // Only change patterns on a 32-beat phrase
+      if ((beat % 32 == 0) && this->patternTimer.ended()) {
         this->nextPattern();
       }
-  
+
+      // Change palette any time
       if (this->paletteTimer.ended()) {
         this->nextPalette();
       }
