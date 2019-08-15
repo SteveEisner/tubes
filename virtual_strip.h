@@ -7,20 +7,19 @@
 #define DEFAULT_FADE_SPEED 100
 
 class VirtualStrip;
-typedef void (*AnimationFn)(VirtualStrip *strip);
+typedef void (*BackgroundFn)(VirtualStrip *strip);
 
-typedef enum EffectMode {
-  None=0,
-  Glitter=1
-} EffectMode;
-
-class Animation {
+class Background {
   public:
-    AnimationFn animate;
-    CRGBPalette16 palette;
+    BackgroundFn animate;
+    TProgmemRGBGradientPalettePtr palette;
     SyncMode sync=All;
-    EffectMode effect=Glitter;
-    uint8_t fade_speed=DEFAULT_FADE_SPEED;
+};
+
+class Foreground {
+  public:
+    EffectMode effect;
+    uint8_t chance=40;
 };
 
 typedef enum VirtualStripFade {
@@ -54,11 +53,13 @@ class VirtualStrip {
     uint8_t fade_speed;
 
     // Pattern parameters
-    Animation animation;
+    Background background;
+    Foreground foreground;
     uint32_t frame;
     uint8_t beat;
     uint16_t beat16;  // 8 bits of beat and 8 bits of fractional
     uint8_t hue;
+    bool beat_pulse;
 
   VirtualStrip(uint8_t num_leds=MAX_LEDS)
   {
@@ -66,12 +67,13 @@ class VirtualStrip {
     this->num_leds = num_leds;
   }
 
-  void load(Animation &animation)
+  void load(Background &background, Foreground &foreground, uint8_t fade_speed=DEFAULT_FADE_SPEED)
   {
-    this->animation = animation;
+    this->foreground = foreground;
+    this->background = background;
     this->fade = FadeIn;
     this->fader = 0;
-    this->fade_speed = animation.fade_speed;
+    this->fade_speed = fade_speed;
     this->brightness = DEFAULT_BRIGHTNESS;
   }
 
@@ -98,8 +100,10 @@ class VirtualStrip {
     if (this->fade == Dead)
       return;
 
+    BeatFrame_24_8 lastFrame = this->frame;
     this->frame = frame;
-    switch (this->animation.sync) {
+
+    switch (this->background.sync) {
       case All:
         break;  
 
@@ -123,9 +127,40 @@ class VirtualStrip {
         this->brightness = scale8(beatsin8( 10 ), 180) + 30;
         break;
     }
-    this->beat16 = (this->frame << 8);
-    this->beat = (this->frame >> 8) % 16;
     this->hue = (this->frame >> 4) % 256;
+
+    this->beat = (this->frame >> 8) % 16;
+    this->beat_pulse = (lastFrame >> 8 != this->frame >> 8);
+
+    switch (this->foreground.effect) {
+      case None:
+        break;  
+
+      case Glitter:
+        addGlitter(this->foreground.chance);
+        break;
+
+      case Beatbox:
+        if (this->beat_pulse)
+          addBeatbox(255, this->palette_color(random8()));
+        break;
+
+      case Bubble:
+        addBubble(this->foreground.chance);
+        break;
+
+      case Spark:
+        addSpark(this->foreground.chance);
+        break;
+
+      case Flash:
+        if (this->beat_pulse && (this->beat & 3) == 0)
+          addFlash(255);
+        break;
+    }
+
+    // Animate this virtual strip
+    this->background.animate(this);
 
     switch (this->fade) {
       case Steady:
@@ -151,22 +186,10 @@ class VirtualStrip {
         }
         break;
     }
-
-    switch (this->animation.effect) {
-      case None:
-        break;  
-
-      case Glitter:
-        addGlitter(25);
-        break;
-    }
-
-    // Animate this virtual strip
-    this->animation.animate(this);
   }
 
   CRGB palette_color(uint8_t c, uint8_t offset=0) {
-    return ColorFromPalette( this->animation.palette, c + offset );
+    return ColorFromPalette( this->background.palette, c + offset );
   }
 
   CRGB hue_color(uint8_t offset=0, uint8_t saturation=255, uint8_t value=192) {
@@ -192,7 +215,7 @@ class VirtualStrip {
   
   uint8_t bpm_sin16( uint16_t lowest=0, uint16_t highest=65535 )
   {
-    uint16_t beatsin = sin16( this->beat16 >> 1 ) + 32768;
+    uint16_t beatsin = sin16( this->beat16 << 7 ) + 32768;
     uint16_t rangewidth = highest - lowest;
     uint16_t scaledbeat = scale16( beatsin, rangewidth );
     uint16_t result = lowest + scaledbeat;

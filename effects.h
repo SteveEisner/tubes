@@ -4,12 +4,55 @@
 #include "particle.h"
 
 
+typedef enum EffectMode {
+  None=0,
+  Glitter=1,
+  Bubble=2,
+  Beatbox=3,
+  Spark=4,
+  Flash=5,
+} EffectMode;
+
+
 void addGlitter(fract8 chance) 
 {
   if (random8() >= chance)
     return;
 
   addParticle(new Particle(random16(), CRGB::White, 128));
+}
+
+void addSpark(fract8 chance) 
+{
+  if (random8() >= chance)
+    return;
+
+  Particle *particle = new Particle(random16(), CRGB::White, 64);
+  uint8_t r = random8();
+  if (r > 128)
+    particle->velocity = r;
+  else
+    particle->velocity = -(128 + r);
+  addParticle(particle);
+}
+
+void addBeatbox(fract8 chance, CRGB color=CRGB::White) 
+{
+  if (random8() >= chance)
+    return;
+
+  Particle *particle = new Particle(random16(), color, 256, drawBeatbox);
+  addParticle(particle);
+}
+
+void addBubble(fract8 chance, CRGB color=CRGB::White) 
+{
+  if (random8() >= chance)
+    return;
+
+  Particle *particle = new Particle(random16(), color, 1024, drawPop);
+  particle->velocity = random16(0, 40) - 20;
+  addParticle(particle);
 }
 
 void addFlash(fract8 chance) 

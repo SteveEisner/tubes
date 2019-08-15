@@ -33,7 +33,9 @@ const static CommandId COMMAND_BRIGHTNESS = 0x888;
 
 
 // List of patterns to cycle through.  Each is defined as a separate function below.
-AnimationFn gPatterns[] = { 
+BackgroundFn gPatterns[] = { 
+  beatbox,
+  particleTest,
   drawNoise, 
   drawNoise, 
   drawNoise, 
@@ -52,6 +54,8 @@ AnimationFn gPatterns[] = {
 };
 /*
 */
+
+
 
 typedef struct {
   bool debugging;
@@ -286,15 +290,17 @@ class PatternController : public MessageReceiver {
     for (uint8_t i = 0; i < NUM_VSTRIPS; i++) {
       this->vstrips[i]->fadeOut();
     }
-  
-    Animation animation;
-    animation.animate = gPatterns[currentState.pattern];
-    animation.palette = gGradientPalettes[currentState.palette_id];
-    animation.sync = sync;
-    animation.effect = None;
+
+    Background background;
+    background.animate = gPatterns[currentState.pattern];
+    background.palette = &gGradientPalettes[currentState.palette_id];
+    background.sync = sync;
+
+    Foreground foreground;
+    foreground.effect = None;
 
     // re-use virtual strips to prevent heap fragmentation
-    this->vstrips[this->next_vstrip]->load(animation);
+    this->vstrips[this->next_vstrip]->load(background, foreground);
     this->next_vstrip = (this->next_vstrip + 1) % NUM_VSTRIPS;
   }
 
@@ -426,6 +432,9 @@ class PatternController : public MessageReceiver {
 
       case 'i':
         this->radio->resetId();
+        break;
+      case 'm':
+        this->radio->tubeId = 255;
         break;
 
       case 'd': 

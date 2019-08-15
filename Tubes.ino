@@ -3,9 +3,7 @@
 #include <avr/pgmspace.h>
 #include "util.h"
 
-#include <WS2812Serial.h>
-#define USE_WS2812SERIAL
-#include <FastLED.h>
+#include "fastled_config.h"
 
 // #define MASTERCONTROL
 

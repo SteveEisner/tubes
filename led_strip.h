@@ -1,12 +1,6 @@
 #ifndef LED_STRIP_H
 #define LED_STRIP_H
 
-FASTLED_USING_NAMESPACE
-
-#if defined(FASTLED_VERSION) && (FASTLED_VERSION < 3001000)
-#warning "Requires FastLED 3.1 or later; check github for latest code."
-#endif
-
 #define MAX_LEDS    64
 
 class LEDs {
@@ -16,6 +10,8 @@ class LEDs {
     const static int FRAMES_PER_SECOND = 100;  // how often we refresh the strip, in frames per second
     const static int REFRESH_PERIOD = 1000 / FRAMES_PER_SECOND;  // how often we refresh the strip, in milliseconds
     int num_leds;
+
+    uint16_t fps = 0;
 
   LEDs(int num_leds=MAX_LEDS) {
     this->num_leds = num_leds;
@@ -31,6 +27,15 @@ class LEDs {
     EVERY_N_MILLISECONDS( this->REFRESH_PERIOD ) {
       // Update the LEDs
       FastLED.show();
+      this->fps++;
+    }
+
+    EVERY_N_MILLISECONDS( 1000 ) {
+      if (this->fps < (FRAMES_PER_SECOND - 20)) {
+        Serial.print(this->fps);
+        Serial.println(F(" fps!"));
+      }
+      this->fps = 0;
     }
   }
 };
