@@ -2,38 +2,18 @@
 #define PATTERNS_H
 
 #include "palette.h"
-#include "effects.h"
 #include "virtual_strip.h"
 
 void rainbow(VirtualStrip *strip) 
 {
   // FastLED's built-in rainbow generator
   fill_rainbow( strip->leds, strip->num_leds, strip->hue, 7);
-  if (currentState.timer > 20000)
-    addGlitter(40);
-}
-
-void beatbox(VirtualStrip *strip)
-{
-  fill_solid( strip->leds, strip->num_leds, CRGB::Black);
-  fill_solid( strip->leds, 2, strip->palette_color(0, strip->hue));
-
-  if (strip->beat_pulse) {
-    CRGB c = strip->palette_color(random8());
-    addBeatbox(255, c);
-  }
 }
 
 void particleTest(VirtualStrip *strip)
 {
   fill_solid( strip->leds, strip->num_leds, CRGB::Black);
   fill_solid( strip->leds, 2, strip->palette_color(0, strip->hue));
-
-  if (strip->beat_pulse) {
-    CRGB c = strip->palette_color(random8());
-    addBeatbox(255, c);
-    // addPop(255, c);
-  }
 }
 
 void solidBlack(VirtualStrip *strip)

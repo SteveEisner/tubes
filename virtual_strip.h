@@ -1,7 +1,6 @@
 #ifndef VIRTUAL_STRIP_H
 #define VIRTUAL_STRIP_H
 
-#include "effects.h"
 #include "led_strip.h"
 
 #define DEFAULT_FADE_SPEED 100
@@ -12,14 +11,8 @@ typedef void (*BackgroundFn)(VirtualStrip *strip);
 class Background {
   public:
     BackgroundFn animate;
-    TProgmemRGBGradientPalettePtr palette;
+    CRGBPalette16 palette;
     SyncMode sync=All;
-};
-
-class Foreground {
-  public:
-    EffectMode effect;
-    uint8_t chance=40;
 };
 
 typedef enum VirtualStripFade {
@@ -54,12 +47,12 @@ class VirtualStrip {
 
     // Pattern parameters
     Background background;
-    Foreground foreground;
     uint32_t frame;
     uint8_t beat;
     uint16_t beat16;  // 8 bits of beat and 8 bits of fractional
     uint8_t hue;
     bool beat_pulse;
+    int bps = 0;
 
   VirtualStrip(uint8_t num_leds=MAX_LEDS)
   {
@@ -67,9 +60,8 @@ class VirtualStrip {
     this->num_leds = num_leds;
   }
 
-  void load(Background &background, Foreground &foreground, uint8_t fade_speed=DEFAULT_FADE_SPEED)
+  void load(Background &background, uint8_t fade_speed=DEFAULT_FADE_SPEED)
   {
-    this->foreground = foreground;
     this->background = background;
     this->fade = FadeIn;
     this->fader = 0;
@@ -95,12 +87,11 @@ class VirtualStrip {
     fill_solid( this->leds, this->num_leds, crgb);
   }
 
-  void update(BeatFrame_24_8 frame)
+  void update(BeatFrame_24_8 frame, uint8_t beat_pulse)
   {
     if (this->fade == Dead)
       return;
-
-    BeatFrame_24_8 lastFrame = this->frame;
+    
     this->frame = frame;
 
     switch (this->background.sync) {
@@ -130,34 +121,7 @@ class VirtualStrip {
     this->hue = (this->frame >> 4) % 256;
 
     this->beat = (this->frame >> 8) % 16;
-    this->beat_pulse = (lastFrame >> 8 != this->frame >> 8);
-
-    switch (this->foreground.effect) {
-      case None:
-        break;  
-
-      case Glitter:
-        addGlitter(this->foreground.chance);
-        break;
-
-      case Beatbox:
-        if (this->beat_pulse)
-          addBeatbox(255, this->palette_color(random8()));
-        break;
-
-      case Bubble:
-        addBubble(this->foreground.chance);
-        break;
-
-      case Spark:
-        addSpark(this->foreground.chance);
-        break;
-
-      case Flash:
-        if (this->beat_pulse && (this->beat & 3) == 0)
-          addFlash(255);
-        break;
-    }
+    this->beat_pulse = beat_pulse;
 
     // Animate this virtual strip
     this->background.animate(this);

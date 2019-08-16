@@ -2,8 +2,10 @@
 #define CONTROLLER_H
 
 #include "beats.h"
+
 #include "pattern.h"
 #include "palette.h"
+#include "effects.h"
 #include "led_strip.h"
 #include "lcd.h"
 #include "radio.h"
@@ -34,8 +36,6 @@ const static CommandId COMMAND_BRIGHTNESS = 0x888;
 
 // List of patterns to cycle through.  Each is defined as a separate function below.
 BackgroundFn gPatterns[] = { 
-  beatbox,
-  particleTest,
   drawNoise, 
   drawNoise, 
   drawNoise, 
@@ -88,6 +88,7 @@ class PatternController : public MessageReceiver {
     LEDs *led_strip;
     BeatController *beats;
     Radio *radio;
+    Effects *effects;
 
     uint8_t x_axis;
     uint8_t y_axis;
@@ -100,6 +101,7 @@ class PatternController : public MessageReceiver {
     this->led_strip = new LEDs(num_leds);
     this->beats = beats;
     this->radio = radio;
+    this->effects = new Effects();
 
     for (uint8_t i=0; i < NUM_VSTRIPS; i++) {
       this->vstrips[i] = new VirtualStrip();
@@ -293,14 +295,13 @@ class PatternController : public MessageReceiver {
 
     Background background;
     background.animate = gPatterns[currentState.pattern];
-    background.palette = &gGradientPalettes[currentState.palette_id];
+    background.palette = gGradientPalettes[currentState.palette_id];
     background.sync = sync;
 
-    Foreground foreground;
-    foreground.effect = None;
-
     // re-use virtual strips to prevent heap fragmentation
-    this->vstrips[this->next_vstrip]->load(background, foreground);
+    this->vstrips[this->next_vstrip]->load(background);
+    EffectParameters params = gEffects[1];
+    this->effects->load(params);
     this->next_vstrip = (this->next_vstrip + 1) % NUM_VSTRIPS;
   }
 
@@ -340,24 +341,36 @@ class PatternController : public MessageReceiver {
   }
 
   void updateGraphics() {
-    animateParticles(currentState.beat_frame);
+    static BeatFrame_24_8 lastFrame = 0;
+    BeatFrame_24_8 beat_frame = currentState.beat_frame;
 
-    bool first = 1;
+    uint8_t beat_pulse = 0;
+    for (int i = 0; i < 6; i++) {
+      if ( (beat_frame >> (8+i)) != (lastFrame >> (8+i)))
+        beat_pulse |= (1<<i);
+    }
+    lastFrame = beat_frame;
+
+    VirtualStrip *first_strip = NULL;
     for (uint8_t i=0; i < NUM_VSTRIPS; i++) {
       VirtualStrip *vstrip = this->vstrips[i];
       if (vstrip->fade == Dead)
         continue;
 
-      vstrip->update(currentState.beat_frame);
-      vstrip->blend(this->led_strip->leds, this->options.brightness, first);
-      first = 0;
+      // Remember the first strip
+      if (first_strip == NULL)
+        first_strip = vstrip;
+     
+      vstrip->update(beat_frame, beat_pulse);
+      vstrip->blend(this->led_strip->leds, this->options.brightness, vstrip == first_strip);
     }
 
-    drawParticles(this->led_strip->leds, this->num_leds);    
+    this->effects->update(first_strip, beat_frame, beat_pulse);
+    this->effects->draw(this->led_strip->leds, this->num_leds);    
   }
 
   virtual void acknowledge() {
-    addFlash(255);
+    addFlash();
   }
 
   virtual void onCommand(uint8_t fromId, CommandId command, void *data) {
@@ -464,10 +477,10 @@ class PatternController : public MessageReceiver {
         break;
 
       case 'g':
-        addGlitter(255);
+        addGlitter();
         break;
       case 'G':
-        addFlash(255);
+        addFlash();
         break;
 
       case 'n':
