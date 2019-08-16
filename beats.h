@@ -18,6 +18,8 @@ class BeatController {
   void setup()
   {
     globalTimer.setup();
+
+    // Starts in phrase 1
     this->sync(DEFAULT_BPM << 8, 0);
   }
 

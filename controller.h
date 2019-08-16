@@ -6,6 +6,9 @@
 #include "pattern.h"
 #include "palette.h"
 #include "effects.h"
+#include "global_state.h"
+
+
 #include "led_strip.h"
 #include "lcd.h"
 #include "radio.h"
@@ -27,42 +30,18 @@ EasyButton button4(BUTTON_PIN_4);
 const static uint8_t DEFAULT_MASTER_BRIGHTNESS = 144;
 
 const static CommandId COMMAND_UPDATE = 0x411;
+const static CommandId COMMAND_NEXT = 0x321;
 const static CommandId COMMAND_RESET = 0x911;
-const static CommandId COMMAND_FIREWORK = 0x321;
+const static CommandId COMMAND_FIREWORK = 0xFFF;
 const static CommandId COMMAND_HELLO = 0x000;
 const static CommandId COMMAND_OPTIONS = 0x123;
 const static CommandId COMMAND_BRIGHTNESS = 0x888;
-
-
-// List of patterns to cycle through.  Each is defined as a separate function below.
-BackgroundFn gPatterns[] = { 
-  drawNoise, 
-  drawNoise, 
-  drawNoise, 
-  rainbow, 
-  drawNoise, 
-  drawNoise, 
-  confetti,
-  drawNoise, 
-  confetti, 
-  drawNoise, 
-  juggle, 
-  drawNoise,
-  confetti,
-  drawNoise,
-  bpm
-};
-/*
-*/
-
 
 
 typedef struct {
   bool debugging;
   uint8_t brightness;
 } ControllerOptions;
-
-uint8_t gPatternsCount = ARRAY_SIZE( gPatterns );
 
 #define NEXT_PATTERN_TIME 53000
 #define NEXT_PALETTE_TIME 27000
@@ -78,8 +57,6 @@ class PatternController : public MessageReceiver {
     VirtualStrip *vstrips[NUM_VSTRIPS];
     uint8_t next_vstrip = 0;
     
-    Timer patternTimer;
-    Timer paletteTimer;
     Timer graphicsTimer;
     Timer updateTimer;
     Timer slaveTimer;
@@ -94,6 +71,10 @@ class PatternController : public MessageReceiver {
     uint8_t y_axis;
     uint16_t b;
     ControllerOptions options;
+
+    Energy energy=LowEnergy;
+    TubeState current_state;
+    TubeState next_state;
 
   PatternController(uint8_t num_leds, BeatController *beats, Radio *radio) {
     this->num_leds = num_leds;
@@ -110,16 +91,20 @@ class PatternController : public MessageReceiver {
   
   void setup()
   {
-    this->options.debugging = 1;
+    this->options.debugging = true;
     this->options.brightness = DEFAULT_MASTER_BRIGHTNESS;
     
     this->lcd->setup();
     this->led_strip->setup();
-
-    this->setPattern(0, random8(gGradientPaletteCount), randomSyncMode());
-    this->patternTimer.start(NEXT_PATTERN_TIME);
-    this->paletteTimer.start(NEXT_PALETTE_TIME);
     Serial.println(F("Graphics: ok"));
+
+    this->set_next_pattern(0);
+    this->set_next_palette(0);
+    this->set_next_effect(0);
+    this->next_state.pattern_phrase = 0;
+    this->next_state.palette_phrase = 0;
+    this->next_state.effect_phrase = 0;
+    Serial.println(F("Patterns: ok"));
 
     button1.begin();
     button2.begin();
@@ -136,8 +121,6 @@ class PatternController : public MessageReceiver {
 
   void update()
   {
-    currentState.timer += globalTimer.delta_millis;
-
     button1.read();
     button2.read();
     button3.read();
@@ -179,50 +162,59 @@ class PatternController : public MessageReceiver {
 
     this->readSerial();
 
-    currentState.bpm = this->beats->bpm;
-    currentState.beat_frame = this->beats->frac;
-    uint8_t beat = this->beats->frac >> 8;
+    // If master has expired, clear masterId
+    if (this->radio->masterTubeId && this->slaveTimer.ended()) {
+      Serial.println(F("I have no master"));
+      this->radio->masterTubeId = 0;
+    }
 
-    if (this->isMaster()) {
-      if (this->radio->masterTubeId) {
-        Serial.println(F("I have no master"));
-        this->radio->masterTubeId = 0;
-      }
+    // Update patterns to the beat
+    this->current_state.bpm = this->beats->bpm;
+    this->current_state.beat_frame = particle_beat_frame = this->beats->frac;  // (particle_beat_frame is a hack)
+    if (this->current_state.bpm >= 125>>8)
+      this->energy = HighEnergy;
+    else if (this->current_state.bpm >= 122>>8)
+      this->energy = MediumEnergy;
+    else
+      this->energy = LowEnergy;
 
-      // Only change patterns on a 32-beat phrase
-      if ((beat % 32 == 0) && this->patternTimer.ended()) {
-        this->nextPattern();
-      }
+    uint16_t phrase = this->current_state.beat_frame >> 12;
+    if (phrase >= this->next_state.pattern_phrase) {
+      this->load_pattern(this->next_state);
+      this->next_state.pattern_phrase += this->set_next_pattern(phrase);
+    }
+    if (phrase >= this->next_state.palette_phrase) {
+      this->load_palette(this->next_state);
+      this->next_state.palette_phrase += this->set_next_palette(phrase);
+    }
+    if (phrase >= this->next_state.effect_phrase) {
+      this->load_effect(this->next_state);
+      this->next_state.effect_phrase += this->set_next_effect(phrase);
+    }
 
-      // Change palette any time
-      if (this->paletteTimer.ended()) {
-        this->nextPalette();
-      }
-  
-      // run periodic timer
-      if (this->updateTimer.ended()) {
-        Serial.print(F("Update "));
-        printState(&currentState);
-        Serial.print(F(" "));
-  
-        if (this->radio->sendCommand(COMMAND_UPDATE, &currentState, sizeof(currentState))) {
-          this->radio->radioFailures = 0;
-          if (currentState.timer < RADIO_SENDPERIOD) {
-            this->updateTimer.snooze(RADIO_SENDPERIOD / 4);
-          } else {
-            this->updateTimer.snooze(RADIO_SENDPERIOD);
-          }
-        } else {
-          // might have been a collision.  Back off by a small amount determined by ID
-          Serial.println(F("Radio update failed"));
-          this->updateTimer.snooze( (this->radio->tubeId & 0x7F) * 1000 );
-          this->radio->radioFailures++;
-          if (this->radio->radioFailures > 100) {
-            this->radio->setup();
-            this->radio->radioRestarts++;
-          }
+    // If alone or master, send out updates
+    if (!this->radio->masterTubeId and this->updateTimer.ended()) {
+      Serial.print(F("Update "));
+      this->current_state.print();
+      Serial.print(F(" "));
+      this->next_state.print();
+      Serial.print(F(" "));
+
+      if (this->radio->sendCommand(COMMAND_UPDATE, &this->current_state, sizeof(this->current_state))) {
+        this->radio->radioFailures = 0;
+        this->updateTimer.snooze(RADIO_SENDPERIOD);
+      } else {
+        // might have been a collision.  Back off by a small amount determined by ID
+        Serial.println(F("Radio update failed"));
+        this->updateTimer.snooze( this->radio->tubeId & 0x7F );
+        this->radio->radioFailures++;
+        if (this->radio->radioFailures > 100) {
+          this->radio->setup();
+          this->radio->radioRestarts++;
         }
       }
+
+      this->radio->sendCommand(COMMAND_NEXT, &this->next_state, sizeof(this->next_state));
     }
 
     this->radio->receiveCommands(this);
@@ -233,13 +225,109 @@ class PatternController : public MessageReceiver {
 
     if (this->lcd->active) {
       this->lcd->size(1);
-      this->lcd->write(0,56, currentState.beat_frame);
+      this->lcd->write(0,56, this->current_state.beat_frame);
       this->lcd->write(80,56, this->x_axis);
       this->lcd->write(100,56, this->y_axis);
       this->lcd->show();
 
       this->lcd->update();
     }
+  }
+
+  void load_pattern(TubeState &tube_state) {
+    if (this->current_state.pattern_id == tube_state.pattern_id)
+      return;
+
+    this->current_state.pattern_phrase = tube_state.pattern_phrase;
+    this->current_state.pattern_id = tube_state.pattern_id % gPatternCount;
+    this->current_state.pattern_sync_id = tube_state.pattern_sync_id;
+      
+    this->update_background();
+    Serial.print(F("Change pattern "));
+    this->current_state.print();
+    Serial.println();
+  }
+
+  uint16_t set_next_pattern(uint16_t phrase) {
+    uint8_t pattern_id = random8(gPatternCount);
+    PatternDef def = gPatterns[pattern_id];
+    if (def.control.energy > this->energy) {
+      pattern_id = 0;
+      def = gPatterns[0];
+    }
+
+    this->next_state.pattern_id = pattern_id;
+    this->next_state.pattern_sync_id = this->randomSyncMode();
+
+    switch (def.control.duration) {
+      case ShortDuration: return random8(5,15);
+      case MediumDuration: return random8(15,25);
+      case LongDuration: return random8(35,45);
+      case ExtraLongDuration: return random8(70, 100);
+    }
+    return 5;
+  }
+
+  void load_palette(TubeState &tube_state) {
+    if (this->current_state.palette_id == tube_state.palette_id)
+      return;
+
+    this->current_state.palette_phrase = tube_state.palette_phrase;
+    this->current_state.palette_id = tube_state.palette_id % gGradientPaletteCount;
+
+    Serial.print(F("Change palette "));
+    this->current_state.print();
+    Serial.println();
+    this->update_background();
+  }
+
+  uint16_t set_next_palette(uint16_t phrase) {
+    this->next_state.palette_id = random8(gGradientPaletteCount);
+    return random8(4,40);
+  }
+
+  void load_effect(TubeState &tube_state) {
+    if (this->current_state.effect_params.effect == tube_state.effect_params.effect)
+      return;
+
+    this->current_state.effect_params = tube_state.effect_params;
+    this->current_state.palette_id = tube_state.palette_id % gGradientPaletteCount;
+  
+    Serial.print(F("Change effect "));
+    this->current_state.print();
+    Serial.println();
+    
+    this->effects->load(this->current_state.effect_params);
+  }
+
+  uint16_t set_next_effect(uint16_t phrase) {
+    EffectDef def = gEffects[random8(gEffectCount)];
+    if (random8() < 200 || def.control.energy > this->energy)
+      def = gEffects[0];
+
+    this->next_state.effect_params = def.params;
+
+    switch (def.control.duration) {
+      case ShortDuration: return 3;
+      case MediumDuration: return 6;
+      case LongDuration: return 10;
+      case ExtraLongDuration: return 20;
+    }
+    return 1;
+  }
+
+  void update_background() {
+    Background background;
+    background.animate = gPatterns[this->current_state.pattern_id].backgroundFn;
+    background.palette = gPalettes[this->current_state.palette_id];
+    background.sync = (SyncMode)this->current_state.pattern_sync_id;
+
+    // re-use virtual strips to prevent heap fragmentation
+    for (uint8_t i = 0; i < NUM_VSTRIPS; i++) {
+      this->vstrips[i]->fadeOut();
+    }
+    this->vstrips[this->next_vstrip]->load(background);
+    this->next_vstrip = (this->next_vstrip + 1) % NUM_VSTRIPS; 
   }
 
   void onButton(uint8_t button) {
@@ -249,16 +337,6 @@ class PatternController : public MessageReceiver {
       this->radio->sendCommand(COMMAND_FIREWORK, NULL, 0);
       return;
     }
-  }
-
-  void setPalette(uint8_t palette_id) {
-    this->setPattern(currentState.pattern, palette_id, (SyncMode)currentState.sync);
-  }
-
-  void startPattern(uint8_t pattern_id, uint8_t palette_id, SyncMode sync) {
-    if (pattern_id == currentState.pattern && palette_id == currentState.palette_id)
-      return;
-    this->setPattern(pattern_id, palette_id, sync);
   }
 
   void optionsChanged() {
@@ -280,31 +358,6 @@ class PatternController : public MessageReceiver {
     this->optionsChanged();
   }
   
-  void setPattern(uint8_t pattern_id, uint8_t palette_id, SyncMode sync) {
-    currentState.pattern = pattern_id;
-    currentState.palette_id = palette_id;
-    currentState.sync = (uint8_t)sync;
-  
-    Serial.print(F("new pattern: "));
-    printState(&currentState);
-    Serial.println();
-  
-    for (uint8_t i = 0; i < NUM_VSTRIPS; i++) {
-      this->vstrips[i]->fadeOut();
-    }
-
-    Background background;
-    background.animate = gPatterns[currentState.pattern];
-    background.palette = gGradientPalettes[currentState.palette_id];
-    background.sync = sync;
-
-    // re-use virtual strips to prevent heap fragmentation
-    this->vstrips[this->next_vstrip]->load(background);
-    EffectParameters params = gEffects[1];
-    this->effects->load(params);
-    this->next_vstrip = (this->next_vstrip + 1) % NUM_VSTRIPS;
-  }
-
   SyncMode randomSyncMode() {
     uint8_t r = random() % 128;
     if (r < 40)
@@ -318,31 +371,9 @@ class PatternController : public MessageReceiver {
     return All;
   }
 
-  bool isMaster() {
-    return this->slaveTimer.ended();
-  }
-
-  void nextPalette() {
-    // If we're not in control - don't do anything
-    this->setPalette(random8(gGradientPaletteCount));
-    this->paletteTimer.start(NEXT_PALETTE_TIME);
-  }
-
-  void nextPattern() {
-    // add one to the current pattern number, and wrap around at the end
-    uint8_t p = addmod8(currentState.pattern, 1, gPatternsCount);
-    SyncMode s = this->randomSyncMode();
-    if (gPatterns[currentState.pattern] == biwave)
-      s = All;
-    this->startPattern(p, random8(gGradientPaletteCount), s);
-    currentState.timer = 0;
-
-    this->patternTimer.start(NEXT_PATTERN_TIME);
-  }
-
   void updateGraphics() {
     static BeatFrame_24_8 lastFrame = 0;
-    BeatFrame_24_8 beat_frame = currentState.beat_frame;
+    BeatFrame_24_8 beat_frame = this->current_state.beat_frame;
 
     uint8_t beat_pulse = 0;
     for (int i = 0; i < 6; i++) {
@@ -406,24 +437,40 @@ class PatternController : public MessageReceiver {
         this->acknowledge();
         return;
       }
-  
-      case COMMAND_UPDATE: {
-        TubeState state;
-        memcpy(&state, data, sizeof(TubeState));
-        printState(&state);
-  
+
+      case COMMAND_NEXT: {
+        Serial.print(F(" next "));
         if (fromId < this->radio->masterTubeId) {
           Serial.println(F(" (ignoring)"));
           return;
         } 
-        Serial.println(F(" (obeying)"));
 
+        memcpy(&this->next_state, data, sizeof(TubeState));
+        this->next_state.print();
+        Serial.println(F(" (obeying)"));
+        return;
+      }
+  
+      case COMMAND_UPDATE: {
+        Serial.print(F(" update "));
+        if (fromId < this->radio->masterTubeId) {
+          Serial.println(F(" (ignoring)"));
+          return;
+        } 
+
+        TubeState state;
+        memcpy(&state, data, sizeof(TubeState));
+        state.print();
+        Serial.println(F(" (obeying)"));
+  
         // Track the last time we received a message from our master
         this->slaveTimer.start(RADIO_SENDPERIOD * 8);
 
-        this->startPattern(state.pattern, state.palette_id, (SyncMode)state.sync);
+        // Catch up to this state
+        this->load_pattern(state);
+        this->load_palette(state);
+        this->load_effect(state);
         this->beats->sync(state.bpm, state.beat_frame);
-        currentState = state;    
         return;
       }
     }
@@ -483,12 +530,13 @@ class PatternController : public MessageReceiver {
         addFlash();
         break;
 
-      case 'n':
-        this->nextPattern();
-        break;
-      case 'p':
-        this->nextPalette();
-        break;
+//      case 'n':
+//        this->nextPattern();
+//        break;
+//      case 'p':
+//        this->nextPalette();
+//        break;
+
     }
   }
 

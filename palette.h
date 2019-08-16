@@ -1946,7 +1946,7 @@ DEFINE_GRADIENT_PALETTE( janico_22_gp ) {
   255, 194,225,255};
 
 
-static const TProgmemRGBGradientPalettePtr gGradientPalettes[] PROGMEM = {
+static const TProgmemRGBGradientPalettePtr gPalettes[] PROGMEM = {
   ib_jul01_gp,
   es_vintage_57_gp,
   es_vintage_01_gp,
@@ -2062,6 +2062,6 @@ static const TProgmemRGBGradientPalettePtr gGradientPalettes[] PROGMEM = {
   purple_sunset_gp,
   janico_22_gp,
 };
-const uint8_t gGradientPaletteCount = ARRAY_SIZE(gGradientPalettes);
+const uint8_t gGradientPaletteCount = ARRAY_SIZE(gPalettes);
 
 #endif

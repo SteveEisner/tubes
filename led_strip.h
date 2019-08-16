@@ -20,6 +20,7 @@ class LEDs {
   void setup() {
     // tell FastLED about the LED strip configuration
     FastLED.addLeds<WS2812SERIAL,DATA_PIN,BRG>(this->leds, this->num_leds).setCorrection(TypicalLEDStrip);
+    FastLED.setMaxPowerInMilliWatts(5000);
     Serial.println(F("LEDs: ok"));
   }
   

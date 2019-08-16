@@ -132,4 +132,30 @@ void drawNoise(VirtualStrip *strip)
   }
 }
 
+typedef struct {
+  BackgroundFn backgroundFn;
+  ControlParameters control;
+} PatternDef;
+
+
+// List of patterns to cycle through.  Each is defined as a separate function below.
+PatternDef gPatterns[] = { 
+  {drawNoise, {ShortDuration}},
+  {drawNoise, {ShortDuration}},
+  {drawNoise, {MediumDuration}},
+  {drawNoise, {MediumDuration}},
+  {drawNoise, {MediumDuration}},
+  {drawNoise, {LongDuration}},
+  {drawNoise, {LongDuration}},
+  {rainbow, {ShortDuration}},
+  {confetti, {ShortDuration}},
+  {confetti, {MediumDuration}},
+  {juggle, {ShortDuration}},
+  {bpm, {ShortDuration}},
+  {bpm, {MediumDuration, HighEnergy}},
+};
+/*
+*/
+const uint8_t gPatternCount = ARRAY_SIZE(gPatterns);
+
 #endif

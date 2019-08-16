@@ -4,6 +4,7 @@
 #include "util.h"
 
 #include "fastled_config.h"
+#include "options.h"
 
 // #define MASTERCONTROL
 
@@ -22,8 +23,8 @@
 #endif
 
 #include "beats.h"
-#include "global_state.h"
 #include "virtual_strip.h"
+
 #include "controller.h"
 #include "radio.h"
 #include "debug.h"

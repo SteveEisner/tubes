@@ -11,14 +11,6 @@ typedef void (*ParticleFn)(Particle *particle, CRGB strip[], uint8_t num_leds);
 extern void drawPoint(Particle *particle, CRGB strip[], uint8_t num_leds);
 extern void drawFlash(Particle *particle, CRGB strip[], uint8_t num_leds);
 
-typedef enum EffectPen {
-  Draw=1,
-  Erase=2,
-  Blend=3,
-  Invert=4,
-  Black=5,
-} EffectPen;
-
 
 class Particle {
   const static uint16_t DEFAULT_BRIGHTNESS = (192<<8); // or 96
@@ -32,7 +24,7 @@ class Particle {
     int16_t velocity = 0;
     int16_t gravity = 0;
     void (*die_fn)(Particle *particle) = NULL;
-    EffectPen pen = Draw;
+    PenMode pen = Draw;
 
 #ifdef PARTICLE_PALETTES
     CRGBPalette16 palette;   // 48 bytes per particle!?
@@ -42,9 +34,8 @@ class Particle {
     uint16_t brightness;
     ParticleFn drawFn;
 
-  Particle(uint16_t position, CRGB color=CRGB::White, EffectPen pen=Draw, uint32_t lifetime=20000, ParticleFn drawFn=drawPoint)
+  Particle(uint16_t position, CRGB color=CRGB::White, PenMode pen=Draw, uint32_t lifetime=20000, ParticleFn drawFn=drawPoint)
   {
-    this->born = currentState.beat_frame;
     this->age = 0;
     this->position = position;
     this->color = color;
@@ -132,8 +123,10 @@ class Particle {
 };
 
 ustd::array<Particle*> particles = ustd::array<Particle*>(5);
+BeatFrame_24_8 particle_beat_frame;
 
 void addParticle(Particle *particle) {
+  particle->born = particle_beat_frame;
   particles.add(particle);
   if (particles.length() > MAX_PARTICLES) {
     Particle *old_particle = particles[0];

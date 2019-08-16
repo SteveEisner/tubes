@@ -8,6 +8,14 @@
 class VirtualStrip;
 typedef void (*BackgroundFn)(VirtualStrip *strip);
 
+typedef enum SyncMode {
+  All=0,
+  SinDrift=1,
+  Pulse=2,
+  Swing=3,
+  SwingDrift=4,
+} SyncMode;
+
 class Background {
   public:
     BackgroundFn animate;

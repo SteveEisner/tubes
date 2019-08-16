@@ -4,30 +4,12 @@
 #include "particle.h"
 #include "virtual_strip.h"
 
-
-typedef enum EffectMode {
-  None=0,
-  Glitter=1,
-  Bubble=2,
-  Beatbox=3,
-  Spark=4,
-  Flash4=5,
-  Flash16=6,
-} EffectMode;
-
-typedef struct {
-  EffectMode effect;
-  CRGB color=CRGB::White;
-  EffectPen pen=Draw;
-  uint8_t chance=255;
-} EffectParameters;
-
-void addGlitter(CRGB color=CRGB::White, EffectPen pen=Draw) 
+void addGlitter(CRGB color=CRGB::White, PenMode pen=Draw) 
 {
   addParticle(new Particle(random16(), CRGB::White, pen, 128));
 }
 
-void addSpark(CRGB color=CRGB::White, EffectPen pen=Draw) 
+void addSpark(CRGB color=CRGB::White, PenMode pen=Draw) 
 {
   Particle *particle = new Particle(random16(), color, pen, 64);
   uint8_t r = random8();
@@ -38,25 +20,25 @@ void addSpark(CRGB color=CRGB::White, EffectPen pen=Draw)
   addParticle(particle);
 }
 
-void addBeatbox(CRGB color=CRGB::White, EffectPen pen=Draw) 
+void addBeatbox(CRGB color=CRGB::White, PenMode pen=Draw) 
 {
   Particle *particle = new Particle(random16(), color, pen, 256, drawBeatbox);
   addParticle(particle);
 }
 
-void addBubble(CRGB color=CRGB::White, EffectPen pen=Draw) 
+void addBubble(CRGB color=CRGB::White, PenMode pen=Draw) 
 {
   Particle *particle = new Particle(random16(), color, pen, 1024, drawPop);
   particle->velocity = random16(0, 40) - 20;
   addParticle(particle);
 }
 
-void addFlash(CRGB color=CRGB::Blue, EffectPen pen=Draw) 
+void addFlash(CRGB color=CRGB::Blue, PenMode pen=Draw) 
 {
   addParticle(new Particle(random16(), color, pen, 256, drawFlash));
 }
 
-void addDrop(CRGB color, EffectPen pen=Draw)
+void addDrop(CRGB color, PenMode pen=Draw)
 {
    Particle *particle = new Particle(65535, color, pen, 360);
    particle->velocity = -500;
@@ -125,50 +107,69 @@ void throwFirework(fract8 chance)
 
 class Effects {
   public:
-    EffectMode effect = None;
-    EffectPen pen = Draw;
-    CRGB color;
+    EffectMode effect=None;
+    PenMode pen=Draw;
+    PenColor pen_color=WhitePen;
     uint8_t chance;
 
   void load(EffectParameters &params) {
     this->effect = params.effect;
     this->pen = params.pen;
-    this->color = params.color;
+    this->pen_color = params.pen_color;
     this->chance = params.chance;
   }
 
-  void update(VirtualStrip *strip, BeatFrame_24_8 beat_frame, uint8_t beat_pulse) {
-    CRGB color;
+  CRGB color(VirtualStrip *strip, uint8_t beat_pulse=0) {
+    switch (this->pen_color) {
+      case WhitePen:
+        return CRGB::White;
 
-    if (random8() >= this->chance)
+      case BlackPen:
+        return CRGB::Black;
+
+      case PalettePen:
+      default:
+        return strip->palette_color(random8());
+    }
+  }
+
+  void update(VirtualStrip *strip, BeatFrame_24_8 beat_frame, uint8_t beat_pulse) {
+    if (random8() <= this->chance) {
+      CRGB color = this->color(strip, beat_pulse);
+
       switch (this->effect) {
         case None:
           break;  
     
         case Glitter:
-          addGlitter(this->color, this->pen);
+          addGlitter(color, this->pen);
           break;
     
-        case Beatbox:
+        case Beatbox1:
+        case Beatbox2:
           if (beat_pulse) {
-            color = strip->palette_color(random8());
             addBeatbox(color, this->pen);
-            addBeatbox(color, this->pen);
+            if (this->effect == Beatbox2)
+              addBeatbox(color, this->pen);
           }
           break;
     
         case Bubble:
-          color = strip->palette_color(random8());
           addBubble(color, this->pen);
           break;
     
         case Spark:
-          color = strip->palette_color(random8());
           addSpark(color, this->pen);
           break;
     
         case Flash4:
           if (beat_pulse & 4) {
+            addFlash(color, this->pen);
+          }
+          break;
+  
+        case Flash8:
+          if (beat_pulse & 8) {
             color = strip->palette_color(random8());
             addFlash(color, this->pen);
           }
@@ -181,6 +182,7 @@ class Effects {
           }
           break;
       }
+    }
 
     this->animate(beat_frame, beat_pulse);
   }
@@ -210,14 +212,23 @@ class Effects {
 };
 
 
-static const EffectParameters gEffects[] PROGMEM = {
-  {None},
-  {Flash4, CRGB::White, Blend},
-  {Flash16, CRGB::White, Blend},
-  {Glitter, CRGB::White, Blend, 40},
-  {Glitter, CRGB::Black, Draw, 20},
-  {Glitter, CRGB::Black, Invert, 40},
-  {Beatbox, CRGB::Black, Draw},
+typedef struct {
+  EffectParameters params;
+  ControlParameters control;
+} EffectDef;
+
+
+static const EffectDef gEffects[] PROGMEM = {
+  {{None}, {LongDuration}},
+  {{Flash4, WhitePen, Blend}, {ShortDuration, HighEnergy}},
+  {{Flash16, WhitePen, Blend}, {MediumDuration, HighEnergy}},
+  {{Glitter, WhitePen, Blend, 20}, {ShortDuration, LowEnergy}},
+  {{Glitter, WhitePen, Blend, 40}, {MediumDuration, MediumEnergy}},
+  {{Glitter, WhitePen, Blend, 20}, {MediumDuration, HighEnergy}},
+  {{Glitter, BlackPen, Draw, 10}, {MediumDuration, LowEnergy}},
+  {{Glitter, BlackPen, Invert, 40}, {ShortDuration, LowEnergy}},
+  {{Beatbox2, BlackPen, Draw}, {MediumDuration, LowEnergy}},
+  {{Beatbox2, PalettePen, Draw}, {ShortDuration, HighEnergy}},
 };
 const uint8_t gEffectCount = ARRAY_SIZE(gEffects);
 
