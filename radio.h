@@ -89,6 +89,7 @@ void printMessageData(RadioMessage &message, int size) {
 class Radio {
   public:
     bool alive = false;                            // true if radio booted up
+    bool reported_no_radio = false;
     TubeId tubeId = 0;
     TubeId masterTubeId = 0;
 
@@ -104,8 +105,10 @@ class Radio {
     SPI.setMISO(PIN_RADIO_MISO);
     SPI.begin();
     
-    if (_radio.init(RADIO_RX_ID, PIN_RADIO_CE, PIN_RADIO_CSN, RADIO_BITRATE, RADIO_CHANNEL))
+    this->reported_no_radio = false;
+    if (_radio.init(RADIO_RX_ID, PIN_RADIO_CE, PIN_RADIO_CSN, RADIO_BITRATE, RADIO_CHANNEL)) {
       this->alive = true;
+    }
     Serial.println(this->alive ? F("Radio: ok") : F("Radio: fail"));
   
     // Start the radio, but mute & listen for a bit
@@ -170,9 +173,10 @@ class Radio {
 #ifdef USERADIO
     RadioMessage message;
   
-    if (!this->alive)
+    if (!this->alive && !this->reported_no_radio)
     {
       Serial.println(F("No radio"));
+      this->reported_no_radio = true;
       return;
     }
     
