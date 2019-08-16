@@ -4,7 +4,7 @@
 #include <SPI.h>
 #include <NRFLite.h>
 
-#define RADIO_VERSION 8
+#define RADIO_VERSION 9
 
 #ifdef USERADIO
 NRFLite _radio(Serial);

@@ -518,27 +518,6 @@ DEFINE_GRADIENT_PALETTE( bhw2_39_gp ) {
   201,  67, 13, 27,
   255,  16,  1, 53};
 
-// Gradient palette "rainfall_gp", originally from
-// http://soliton.vm.bytemark.co.uk/pub/cpt-city/jjg/misc/tn/rainfall.png.index.html
-// converted for FastLED with gammas (2.6, 2.2, 2.5)
-// Size: 56 bytes of program space.
-
-DEFINE_GRADIENT_PALETTE( rainfall_gp ) {
-    0, 192,118,  3,
-   36, 192,118,  3,
-   36, 222,118, 24,
-   72, 222,118, 24,
-   72, 224,209, 37,
-  109, 224,209, 37,
-  109,  58,159, 43,
-  145,  58,159, 43,
-  145,   7,133, 52,
-  182,   7,133, 52,
-  182,   4,118, 50,
-  218,   4,118, 50,
-  218,   1, 85,  8,
-  255,   1, 85,  8};
-
 // Gradient palette "tashangel_gp", originally from
 // http://soliton.vm.bytemark.co.uk/pub/cpt-city/rc/tn/tashangel.png.index.html
 // converted for FastLED with gammas (2.6, 2.2, 2.5)
@@ -703,19 +682,6 @@ DEFINE_GRADIENT_PALETTE( Cyan_Orange_Stripped_gp ) {
   248,   0,  0,  0,
   251,   0,  0,  0,
   255,   0,  0,  0};
-
-// Gradient palette "Coral_reef_gp", originally from
-// http://soliton.vm.bytemark.co.uk/pub/cpt-city/nd/other/tn/Coral_reef.png.index.html
-// converted for FastLED with gammas (2.6, 2.2, 2.5)
-// Size: 24 bytes of program space.
-
-DEFINE_GRADIENT_PALETTE( Coral_reef_gp ) {
-    0,  40,199,197,
-   50,  10,152,155,
-   96,   1,111,120,
-   96,  43,127,162,
-  139,  10, 73,111,
-  255,   1, 34, 71};
 
 // Gradient palette "Cyan_White_Green_gp", originally from
 // http://soliton.vm.bytemark.co.uk/pub/cpt-city/nd/basic/tn/Cyan_White_Green.png.index.html
@@ -1031,25 +997,6 @@ DEFINE_GRADIENT_PALETTE( konkikyo_19_gp ) {
   229,   1,  2,  9,
   252,   1,  2,  9,
   255,   1,  2,  9};
-
-// Gradient palette "sancristobal_09_gp", originally from
-// http://soliton.vm.bytemark.co.uk/pub/cpt-city/gacruxa/sancristobal/tn/sancristobal-09.png.index.html
-// converted for FastLED with gammas (2.6, 2.2, 2.5)
-// Size: 48 bytes of program space.
-
-DEFINE_GRADIENT_PALETTE( sancristobal_09_gp ) {
-    1,   3,  9,255,
-   25,   3,  9,255,
-   27,  60,178,115,
-  123,  60,178,115,
-  125,   3,255,255,
-  155,   3,255,255,
-  156, 255,161, 17,
-  202, 255,161, 17,
-  204, 167, 75,170,
-  229, 167, 75,170,
-  230,  94,  2,  2,
-  251,  94,  2,  2,
 
 // Gradient palette "sulz_22_gp", originally from
 // http://soliton.vm.bytemark.co.uk/pub/cpt-city/gacruxa/sulz/tn/sulz-22.png.index.html
@@ -1559,7 +1506,6 @@ static const TProgmemRGBGradientPalettePtr gGradientPalettes[] PROGMEM = {
   Analogous_02_gp,
   Analogous_04a_gp,
   Cyan_Orange_Stripped_gp,
-  Coral_reef_gp,
   Cyan_White_Green_gp,
   Wild_Orange_gp,
   IKat_Radial_gp,
@@ -1578,7 +1524,6 @@ static const TProgmemRGBGradientPalettePtr gGradientPalettes[] PROGMEM = {
   grindylow_21_gp,
   konjo_08_gp,
   konkikyo_19_gp,
-  sancristobal_09_gp,
   sulz_22_gp,
   Pills_2_gp,
   Pink_Yellow_Orange_1_gp,
@@ -1603,12 +1548,11 @@ static const TProgmemRGBGradientPalettePtr gGradientPalettes[] PROGMEM = {
   es_pinksplash_05_gp,
   es_pinksplash_10_gp,
   es_vintage_56_gp,
-  es_vintage_10_gp
+  es_vintage_10_gp,
   gold_yellow_gp,
   radioactive_slime_gp,
   pastel_rainbow_gp,
   purple_sunset_gp,
-  rainfall_gp
 };
 const uint8_t gGradientPaletteCount = ARRAY_SIZE(gGradientPalettes);
 
