@@ -7,7 +7,7 @@ class LEDs {
   public:
     CRGB leds[MAX_LEDS];
     const static int DATA_PIN = 1;
-    const static int FRAMES_PER_SECOND = 100;  // how often we refresh the strip, in frames per second
+    const static int FRAMES_PER_SECOND = 300;  // how often we refresh the strip, in frames per second
     const static int REFRESH_PERIOD = 1000 / FRAMES_PER_SECOND;  // how often we refresh the strip, in milliseconds
     int num_leds;
 
@@ -32,7 +32,7 @@ class LEDs {
     }
 
     EVERY_N_MILLISECONDS( 1000 ) {
-      if (this->fps < (FRAMES_PER_SECOND - 20)) {
+      if (this->fps < (FRAMES_PER_SECOND - 30)) {
         Serial.print(this->fps);
         Serial.println(F(" fps!"));
       }

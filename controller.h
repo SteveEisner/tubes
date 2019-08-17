@@ -50,7 +50,7 @@ typedef struct {
 
 class PatternController : public MessageReceiver {
   public:
-    const static int FRAMES_PER_SECOND = 150;  // how often we animate, in frames per second
+    const static int FRAMES_PER_SECOND = 300;  // how often we animate, in frames per second
     const static int REFRESH_PERIOD = 1000 / FRAMES_PER_SECOND;  // how often we animate, in milliseconds
 
     uint8_t num_leds;
@@ -71,6 +71,7 @@ class PatternController : public MessageReceiver {
     uint8_t y_axis;
     uint16_t b;
     ControllerOptions options;
+    char key_buffer[20] = {0};
 
     Energy energy=LowEnergy;
     TubeState current_state;
@@ -160,7 +161,7 @@ class PatternController : public MessageReceiver {
       }
 #endif
 
-    this->readSerial();
+    this->read_keys();
 
     // If master has expired, clear masterId
     if (this->radio->masterTubeId && this->slaveTimer.ended()) {
@@ -169,7 +170,7 @@ class PatternController : public MessageReceiver {
     }
 
     // Update patterns to the beat
-    this->current_state.bpm = this->beats->bpm;
+    this->current_state.bpm = this->next_state.bpm = this->beats->bpm;
     this->current_state.beat_frame = particle_beat_frame = this->beats->frac;  // (particle_beat_frame is a hack)
     if (this->current_state.bpm >= 125>>8)
       this->energy = HighEnergy;
@@ -234,6 +235,12 @@ class PatternController : public MessageReceiver {
     }
   }
 
+  void background_changed() {
+    this->update_background();
+    this->current_state.print();
+    Serial.println();
+  }
+
   void load_pattern(TubeState &tube_state) {
     if (this->current_state.pattern_id == tube_state.pattern_id)
       return;
@@ -241,11 +248,9 @@ class PatternController : public MessageReceiver {
     this->current_state.pattern_phrase = tube_state.pattern_phrase;
     this->current_state.pattern_id = tube_state.pattern_id % gPatternCount;
     this->current_state.pattern_sync_id = tube_state.pattern_sync_id;
-      
-    this->update_background();
+
     Serial.print(F("Change pattern "));
-    this->current_state.print();
-    Serial.println();
+    this->background_changed();
   }
 
   uint16_t set_next_pattern(uint16_t phrase) {
@@ -276,9 +281,7 @@ class PatternController : public MessageReceiver {
     this->current_state.palette_id = tube_state.palette_id % gGradientPaletteCount;
 
     Serial.print(F("Change palette "));
-    this->current_state.print();
-    Serial.println();
-    this->update_background();
+    this->background_changed();
   }
 
   uint16_t set_next_palette(uint16_t phrase) {
@@ -479,12 +482,56 @@ class PatternController : public MessageReceiver {
     Serial.println(command, HEX);
   }
 
-  void readSerial() {
+  void read_keys() {
     if (!Serial.available())
       return;
       
     char c = Serial.read();
-    switch (c) {
+    char *k = this->key_buffer;
+    uint8_t max = sizeof(this->key_buffer);
+    for (uint8_t i=0; *k && (i < max-1); i++) {
+      k++;
+    }
+    if (c == 10) {
+      this->keyboard_command(this->key_buffer);
+      this->key_buffer[0] = 0;
+    } else {
+      *k++ = c;
+      *k = 0;    
+    }
+  }
+
+  accum88 parse_number(char *s) {
+    uint16_t n=0, d=0;
+    
+    while (*s == ' ')
+      s++;
+    while (*s) {
+      if (*s < '0' || *s > '9')
+        break;
+      n = n*10 + (*s++ - '0');
+    }
+    n = n << 8;
+    
+    if (*s == '.') {
+      uint16_t div = 1;
+      s++;
+      while (*s) {
+        if (*s < '0' || *s > '9')
+          break;
+        d = d*10 + (*s++ - '0');
+        div *= 10;
+      }
+      d = (d << 8) / div;
+    }
+    return n+d;
+  }
+
+  void keyboard_command(char *command) {
+    uint8_t b;
+    accum88 arg = this->parse_number(command+1);
+    
+    switch (command[0]) {
       case 'f':
         this->radio->sendCommandFrom(255, COMMAND_FIREWORK, NULL, 0);
         this->onCommand(0, COMMAND_FIREWORK, NULL);
@@ -497,46 +544,76 @@ class PatternController : public MessageReceiver {
         this->radio->tubeId = 255;
         break;
 
-      case 'd': 
+      case 'd':
         this->setDebugging(!this->options.debugging);
         break;
+      
       case '-':
-        this->setBrightness(this->options.brightness - 5);
+        b = this->options.brightness;
+        while (*command++ == '-')
+          b -= 5;
+        this->setBrightness(b - 5);
         break;
       case '+':
-        this->setBrightness(this->options.brightness + 5);
-        break;
-        
-      case '[':
-        this->beats->adjust_bpm(-(1<<8));
-        break;
-      case '{':
-        this->beats->adjust_bpm(-(1<<4));
-        break;
-      case '}':
-        this->beats->adjust_bpm(1<<4);
-        break;
-      case ']':
-        this->beats->adjust_bpm(1<<8);
-        break;
-      case 's':
+        b = this->options.brightness;
+        while (*command++ == '+')
+          b += 5;
+        this->setBrightness(b + 5);
+        return;
+      case 'l':
+        if (arg < 5*256) {
+          Serial.println("nope");
+          return;
+        }
+        this->setBrightness(arg >> 8);
+        return;
+
+      case 'b':
+        if (arg < 60*256) {
+          Serial.println("nope");
+          return;
+        }
+        this->beats->set_bpm(arg);
+        return;
+
+      case 'v':
         this->beats->start_phrase();
-        break;
+        return;
 
-      case 'g':
-        addGlitter();
-        break;
-      case 'G':
-        addFlash();
-        break;
+      case 'p':
+        this->next_state.pattern_phrase = 0;
+        this->next_state.pattern_id = arg >> 8;
+        this->next_state.pattern_sync_id = All;
+        this->radio->sendCommand(COMMAND_NEXT, &this->next_state, sizeof(this->next_state));
+        return;        
+        
+      case 'o':
+        this->next_state.pattern_phrase = 0;
+        this->next_state.pattern_id = this->current_state.pattern_id;
+        this->next_state.pattern_sync_id = arg >> 8;
+        this->radio->sendCommand(COMMAND_NEXT, &this->next_state, sizeof(this->next_state));
+        return;
+        
+      case 'c':
+        this->next_state.palette_phrase = 0;
+        this->next_state.palette_id = arg >> 8;
+        this->radio->sendCommand(COMMAND_NEXT, &this->next_state, sizeof(this->next_state));
+        return;
+        
+      case 'e':
+        this->next_state.effect_phrase = 0;
+        this->next_state.effect_params = gEffects[(arg >> 8) % gEffectCount].params;
+        this->radio->sendCommand(COMMAND_NEXT, &this->next_state, sizeof(this->next_state));
+        return;
 
-//      case 'n':
-//        this->nextPattern();
-//        break;
-//      case 'p':
-//        this->nextPalette();
-//        break;
-
+      case '?':
+        Serial.println(F("b###.# - set bpm"));
+        Serial.println(F("d - toggle debugging"));
+        Serial.println(F("l### - brightness"));
+        Serial.println(F("p### - patterns"));
+        Serial.println(F("o### - sync mode"));
+        Serial.println(F("c### - colors"));
+        Serial.println(F("e### - effects"));
     }
   }
 

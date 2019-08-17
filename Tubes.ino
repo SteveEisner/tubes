@@ -10,8 +10,8 @@
 
 #ifdef MASTERCONTROL
 
-#define NUM_LEDS 64
-#define USELCD
+#define NUM_LEDS 16
+//#define USELCD
 #define USERADIO
 #define USEJOYSTICK
 
