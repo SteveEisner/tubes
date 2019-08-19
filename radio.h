@@ -4,7 +4,7 @@
 #include <SPI.h>
 #include <NRFLite.h>
 
-#define RADIO_VERSION 9
+#define RADIO_VERSION 1
 
 #ifdef USERADIO
 NRFLite _radio(Serial);
@@ -115,17 +115,15 @@ class Radio {
 #endif
   }
 
-  void resetId() {
-    this->tubeId = newTubeId();
+  void resetId(uint8_t id=0) {
+    if (id == 0)
+      id = newTubeId();
+    this->tubeId = id;
     Serial.print(F("My ID is "));
     Serial.println(this->tubeId);
 
     if (this->tubeId > this->masterTubeId)
       this->masterTubeId = 0;
-  }
-
-  bool isMaster() {
-    return this->tubeId >= this->masterTubeId;
   }
 
   bool sendCommand(uint32_t command, void *data=0, uint8_t size=0, TubeId relayId=0)
@@ -154,15 +152,13 @@ class Radio {
     uint16_t crc = calculate_crc(message.data, sizeof(message.data));
     message.crc = crc;
 
-    Serial.print(F("Sending "));
-    Serial.print(message.command, HEX);
-    Serial.print(F(" "));
+    Serial.print(F("["));
     Serial.print(message.tubeId);
-    // Serial.print(" ");
-    // printMessageData(message, size);
+    Serial.print(F(": "));
+    Serial.print(message.command, HEX);
   
     sent = _radio.send(RADIO_TX_ID, &message, sizeof(message), NRFLite::NO_ACK);
-    Serial.println(sent ? F(" ok") : F(" failed"));
+    Serial.print(sent ? F(" ok] ") : F(" failed] "));
 #endif
 
     return sent;

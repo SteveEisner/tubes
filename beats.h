@@ -56,7 +56,7 @@ class BeatController {
   }
 
   void start_phrase() {
-    this->frac = 0;
+    this->frac &= -0xFFF;
     this->accum = 0;
   }
 

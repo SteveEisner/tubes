@@ -113,6 +113,18 @@ class Particle {
         strip[pos] = -strip[pos];
         break;  
 
+      case Bright:
+        strip[pos] *= 2;
+        break;  
+
+      case Dark:
+        strip[pos] /= 3;
+        break;  
+
+      case White:
+        strip[pos] = CRGB::White;
+        break;  
+
       case Black:
         strip[pos] = CRGB::Black;
         break;  

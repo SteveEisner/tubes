@@ -109,78 +109,49 @@ class Effects {
   public:
     EffectMode effect=None;
     PenMode pen=Draw;
-    PenColor pen_color=WhitePen;
+    BeatPulse beat;
     uint8_t chance;
 
   void load(EffectParameters &params) {
     this->effect = params.effect;
     this->pen = params.pen;
-    this->pen_color = params.pen_color;
+    this->beat = params.beat;
     this->chance = params.chance;
   }
 
-  CRGB color(VirtualStrip *strip, uint8_t beat_pulse=0) {
-    switch (this->pen_color) {
-      case WhitePen:
-        return CRGB::White;
+  void update(VirtualStrip *strip, BeatFrame_24_8 beat_frame, BeatPulse beat_pulse) {
+    if (!this->beat || beat_pulse & this->beat) {
 
-      case BlackPen:
-        return CRGB::Black;
-
-      case PalettePen:
-      default:
-        return strip->palette_color(random8());
-    }
-  }
-
-  void update(VirtualStrip *strip, BeatFrame_24_8 beat_frame, uint8_t beat_pulse) {
-    if (random8() <= this->chance) {
-      CRGB color = this->color(strip, beat_pulse);
-
-      switch (this->effect) {
-        case None:
-          break;  
-    
-        case Glitter:
-          addGlitter(color, this->pen);
-          break;
-    
-        case Beatbox1:
-        case Beatbox2:
-          if (beat_pulse) {
+      if (random8() <= this->chance) {
+        CRGB color = strip->palette_color(random8());
+  
+        switch (this->effect) {
+          case None:
+            break;
+      
+          case Glitter:
+            addGlitter(color, this->pen);
+            break;
+      
+          case Beatbox1:
+          case Beatbox2:
             addBeatbox(color, this->pen);
             if (this->effect == Beatbox2)
               addBeatbox(color, this->pen);
-          }
-          break;
-    
-        case Bubble:
-          addBubble(color, this->pen);
-          break;
-    
-        case Spark:
-          addSpark(color, this->pen);
-          break;
-    
-        case Flash4:
-          if (beat_pulse & 4) {
+            break;
+      
+          case Bubble:
+            addBubble(color, this->pen);
+            break;
+      
+          case Spark:
+            addSpark(color, this->pen);
+            break;
+      
+          case Flash:
             addFlash(color, this->pen);
-          }
-          break;
-  
-        case Flash8:
-          if (beat_pulse & 8) {
-            color = strip->palette_color(random8());
-            addFlash(color, this->pen);
-          }
-          break;
-  
-        case Flash16:
-          if (beat_pulse & 16) {
-            color = strip->palette_color(random8());
-            addFlash(color, this->pen);
-          }
-          break;
+            break;  
+        }
       }
     }
 
@@ -220,15 +191,21 @@ typedef struct {
 
 static const EffectDef gEffects[] PROGMEM = {
   {{None}, {LongDuration}},
-  {{Flash4, WhitePen, Blend}, {ShortDuration, HighEnergy}},
-  {{Flash16, WhitePen, Blend}, {MediumDuration, HighEnergy}},
-  {{Glitter, WhitePen, Blend, 10}, {ShortDuration, LowEnergy}},
-  {{Glitter, WhitePen, Blend, 20}, {MediumDuration, MediumEnergy}},
-  {{Glitter, WhitePen, Blend, 10}, {MediumDuration, HighEnergy}},
-  {{Glitter, BlackPen, Draw, 10}, {MediumDuration, LowEnergy}},
-  {{Glitter, BlackPen, Invert, 40}, {ShortDuration, LowEnergy}},
-  {{Beatbox2, BlackPen, Draw}, {MediumDuration, LowEnergy}},
-  {{Beatbox2, PalettePen, Draw}, {ShortDuration, HighEnergy}},
+  {{Flash, Bright, Beat, 20}, {MediumDuration, MediumEnergy}},
+  {{Flash, Dark, TwoBeats, 20}, {MediumDuration, MediumEnergy}},
+  {{Flash, Bright, Measure}, {ShortDuration, HighEnergy}},
+  {{Flash, Bright, Phrase}, {MediumDuration, HighEnergy}},
+  {{Flash, Dark, Phrase}, {ShortDuration, LowEnergy}},
+  {{Glitter, White, Eighth, 10}, {ShortDuration, LowEnergy}},
+  {{Glitter, White, Eighth, 20}, {MediumDuration, MediumEnergy}},
+  {{Glitter, White, Eighth, 10}, {MediumDuration, HighEnergy}},
+  {{Glitter, Black, Eighth, 10}, {MediumDuration, LowEnergy}},
+  {{Glitter, Draw, Eighth, 10}, {LongDuration, LowEnergy}},
+  {{Glitter, Draw, Eighth, 120}, {MediumDuration, LowEnergy}},
+  {{Glitter, Invert, Eighth, 40}, {ShortDuration, LowEnergy}},
+  {{Beatbox2, Black}, {MediumDuration, LowEnergy}},
+  {{Beatbox2, Draw}, {ShortDuration, HighEnergy}},
+  {{Bubble, Black}, {MediumDuration, LowEnergy}},
 };
 const uint8_t gEffectCount = ARRAY_SIZE(gEffects);
 

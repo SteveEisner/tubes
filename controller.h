@@ -150,14 +150,12 @@ class PatternController : public MessageReceiver {
 
     if (this->x_axis > 100) {
       if (!this->options.debugging) {
-        this->options.debugging = 1;
-        this->radio->sendCommand(COMMAND_OPTIONS, &this->options, sizeof(this->options));
+        this->setDebugging(1);
       }
       this->beats->set_bpm(DEFAULT_BPM << 8);
     } else if (this->x_axis < 30)
       if (this->options.debugging) {
-        this->options.debugging = 0;
-        this->radio->sendCommand(COMMAND_OPTIONS, &this->options, sizeof(this->options));
+        this->setDebugging(0);
       }
 #endif
 
@@ -170,52 +168,25 @@ class PatternController : public MessageReceiver {
     }
 
     // Update patterns to the beat
-    this->current_state.bpm = this->next_state.bpm = this->beats->bpm;
-    this->current_state.beat_frame = particle_beat_frame = this->beats->frac;  // (particle_beat_frame is a hack)
-    if (this->current_state.bpm >= 125>>8)
-      this->energy = HighEnergy;
-    else if (this->current_state.bpm >= 122>>8)
-      this->energy = MediumEnergy;
-    else
-      this->energy = LowEnergy;
+    this->update_beat();
 
     uint16_t phrase = this->current_state.beat_frame >> 12;
     if (phrase >= this->next_state.pattern_phrase) {
       this->load_pattern(this->next_state);
-      this->next_state.pattern_phrase += this->set_next_pattern(phrase);
+      this->next_state.pattern_phrase = phrase + this->set_next_pattern(phrase);
     }
     if (phrase >= this->next_state.palette_phrase) {
       this->load_palette(this->next_state);
-      this->next_state.palette_phrase += this->set_next_palette(phrase);
+      this->next_state.palette_phrase = phrase + this->set_next_palette(phrase);
     }
     if (phrase >= this->next_state.effect_phrase) {
       this->load_effect(this->next_state);
-      this->next_state.effect_phrase += this->set_next_effect(phrase);
+      this->next_state.effect_phrase = phrase + this->set_next_effect(phrase);
     }
 
     // If alone or master, send out updates
     if (!this->radio->masterTubeId and this->updateTimer.ended()) {
-      Serial.print(F("Update "));
-      this->current_state.print();
-      Serial.print(F(" "));
-      this->next_state.print();
-      Serial.print(F(" "));
-
-      if (this->radio->sendCommand(COMMAND_UPDATE, &this->current_state, sizeof(this->current_state))) {
-        this->radio->radioFailures = 0;
-        this->updateTimer.snooze(RADIO_SENDPERIOD);
-      } else {
-        // might have been a collision.  Back off by a small amount determined by ID
-        Serial.println(F("Radio update failed"));
-        this->updateTimer.snooze( this->radio->tubeId & 0x7F );
-        this->radio->radioFailures++;
-        if (this->radio->radioFailures > 100) {
-          this->radio->setup();
-          this->radio->radioRestarts++;
-        }
-      }
-
-      this->radio->sendCommand(COMMAND_NEXT, &this->next_state, sizeof(this->next_state));
+      this->send_update();
     }
 
     this->radio->receiveCommands(this);
@@ -235,6 +206,49 @@ class PatternController : public MessageReceiver {
     }
   }
 
+  void update_beat() {
+    this->current_state.bpm = this->next_state.bpm = this->beats->bpm;
+    this->current_state.beat_frame = particle_beat_frame = this->beats->frac;  // (particle_beat_frame is a hack)
+    if (this->current_state.bpm >= 125>>8)
+      this->energy = HighEnergy;
+    else if (this->current_state.bpm >= 122>>8)
+      this->energy = MediumEnergy;
+    else
+      this->energy = LowEnergy;    
+  }
+  
+  void send_update() {
+    this->current_state.print();
+    Serial.print(F(" "));
+
+    if (this->radio->sendCommand(COMMAND_UPDATE, &this->current_state, sizeof(this->current_state))) {
+      this->radio->radioFailures = 0;
+      this->updateTimer.snooze(RADIO_SENDPERIOD);
+    } else {
+      // might have been a collision.  Back off by a small amount determined by ID
+      Serial.println(F("Radio update failed"));
+      this->updateTimer.snooze( this->radio->tubeId & 0x7F );
+      this->radio->radioFailures++;
+      if (this->radio->radioFailures > 100) {
+        this->radio->setup();
+        this->radio->radioRestarts++;
+      }
+    }
+
+    uint16_t phrase = this->current_state.beat_frame >> 12;
+    Serial.print(F("    "));
+    Serial.print(this->next_state.pattern_phrase - phrase);
+    Serial.print(F("P "));
+    Serial.print(this->next_state.palette_phrase - phrase);
+    Serial.print(F("C "));
+    Serial.print(this->next_state.effect_phrase - phrase);
+    Serial.print(F("E: "));
+    this->next_state.print();
+    Serial.print(F(" "));
+    this->radio->sendCommand(COMMAND_NEXT, &this->next_state, sizeof(this->next_state));
+    Serial.println();    
+  }
+
   void background_changed() {
     this->update_background();
     this->current_state.print();
@@ -242,7 +256,8 @@ class PatternController : public MessageReceiver {
   }
 
   void load_pattern(TubeState &tube_state) {
-    if (this->current_state.pattern_id == tube_state.pattern_id)
+    if (this->current_state.pattern_id == tube_state.pattern_id 
+        && this->current_state.pattern_sync_id == tube_state.pattern_sync_id)
       return;
 
     this->current_state.pattern_phrase = tube_state.pattern_phrase;
@@ -343,9 +358,9 @@ class PatternController : public MessageReceiver {
   }
 
   void optionsChanged() {
-#ifdef MASTERCONTROL
-    this->radio->sendCommand(COMMAND_OPTIONS, &options, sizeof(options));
-#endif
+    if (this->radio->tubeId >= 250) {
+      this->radio->sendCommand(COMMAND_OPTIONS, &options, sizeof(options));
+    }
   }
 
   void setBrightness(uint8_t brightness) {
@@ -357,6 +372,9 @@ class PatternController : public MessageReceiver {
   }
 
   void setDebugging(bool debugging) {
+    Serial.print(F("debugging "));
+    Serial.println(debugging);
+
     this->options.debugging = debugging;
     this->optionsChanged();
   }
@@ -379,9 +397,9 @@ class PatternController : public MessageReceiver {
     BeatFrame_24_8 beat_frame = this->current_state.beat_frame;
 
     uint8_t beat_pulse = 0;
-    for (int i = 0; i < 6; i++) {
-      if ( (beat_frame >> (8+i)) != (lastFrame >> (8+i)))
-        beat_pulse |= (1<<i);
+    for (int i = 0; i < 8; i++) {
+      if ( (beat_frame >> (6+i)) != (lastFrame >> (6+i)))
+        beat_pulse |= 1<<i;
     }
     lastFrame = beat_frame;
 
@@ -399,7 +417,7 @@ class PatternController : public MessageReceiver {
       vstrip->blend(this->led_strip->leds, this->options.brightness, vstrip == first_strip);
     }
 
-    this->effects->update(first_strip, beat_frame, beat_pulse);
+    this->effects->update(first_strip, beat_frame, (BeatPulse)beat_pulse);
     this->effects->draw(this->led_strip->leds, this->num_leds);    
   }
 
@@ -538,10 +556,7 @@ class PatternController : public MessageReceiver {
         break;
 
       case 'i':
-        this->radio->resetId();
-        break;
-      case 'm':
-        this->radio->tubeId = 255;
+        this->radio->resetId(arg >> 8);
         break;
 
       case 'd':
@@ -562,7 +577,7 @@ class PatternController : public MessageReceiver {
         return;
       case 'l':
         if (arg < 5*256) {
-          Serial.println("nope");
+          Serial.println(F("nope"));
           return;
         }
         this->setBrightness(arg >> 8);
@@ -570,14 +585,18 @@ class PatternController : public MessageReceiver {
 
       case 'b':
         if (arg < 60*256) {
-          Serial.println("nope");
+          Serial.println(F("nope"));
           return;
         }
         this->beats->set_bpm(arg);
+        this->update_beat();
+        this->send_update();
         return;
 
-      case 'v':
+      case 's':
         this->beats->start_phrase();
+        this->update_beat();
+        this->send_update();
         return;
 
       case 'p':
@@ -587,7 +606,7 @@ class PatternController : public MessageReceiver {
         this->radio->sendCommand(COMMAND_NEXT, &this->next_state, sizeof(this->next_state));
         return;        
         
-      case 'o':
+      case 'm':
         this->next_state.pattern_phrase = 0;
         this->next_state.pattern_id = this->current_state.pattern_id;
         this->next_state.pattern_sync_id = arg >> 8;
@@ -608,12 +627,16 @@ class PatternController : public MessageReceiver {
 
       case '?':
         Serial.println(F("b###.# - set bpm"));
-        Serial.println(F("d - toggle debugging"));
-        Serial.println(F("l### - brightness"));
+        Serial.println(F("s - start phrase"));
+        Serial.println();
         Serial.println(F("p### - patterns"));
-        Serial.println(F("o### - sync mode"));
+        Serial.println(F("m### - sync mode"));
         Serial.println(F("c### - colors"));
         Serial.println(F("e### - effects"));
+        Serial.println();
+        Serial.println(F("i### - set ID"));
+        Serial.println(F("d - toggle debugging"));
+        Serial.println(F("l### - brightness"));
     }
   }
 
