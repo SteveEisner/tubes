@@ -101,7 +101,7 @@ void juggle(VirtualStrip *strip)
   }
 }
 
-uint8_t noise[MAX_LEDS];
+uint8_t noise[MAX_VIRTUAL_LEDS];
 
 void fillnoise8(uint32_t frame, uint8_t num_leds) {
   uint16_t scale = 17;

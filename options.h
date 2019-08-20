@@ -21,14 +21,14 @@ typedef struct ControlParameters {
 } ControlParams;
 
 typedef enum PenMode: uint8_t {
-  Draw=1,
-  Erase=2,
-  Blend=3,
-  Invert=4,
-  White=5,
-  Black=6,
-  Bright=7,
-  Dark=8,
+  Draw=0,
+  Erase=1,
+  Blend=2,
+  Invert=3,
+  White=4,
+  Black=5,
+  Brighten=6,
+  Darken=7,
 } PenMode;
 
 typedef enum EffectMode: uint8_t {
@@ -45,13 +45,12 @@ typedef enum BeatPulse: uint8_t {
   Continuous=0,
   Eighth=1,
   Quarter=2,
-  Half=3,
-  Beat=4,
-  TwoBeats=8,
-  Measure=16,
-  TwoMeasures=32,
-  Phrase=64,
-  TwoPhrases=128,
+  Half=4,
+  Beat=8,
+  TwoBeats=16,
+  Measure=32,
+  TwoMeasures=64,
+  Phrase=128,
 } BeatPulse;
 
 typedef struct {

@@ -191,11 +191,11 @@ typedef struct {
 
 static const EffectDef gEffects[] PROGMEM = {
   {{None}, {LongDuration}},
-  {{Flash, Bright, Beat, 20}, {MediumDuration, MediumEnergy}},
-  {{Flash, Dark, TwoBeats, 20}, {MediumDuration, MediumEnergy}},
-  {{Flash, Bright, Measure}, {ShortDuration, HighEnergy}},
-  {{Flash, Bright, Phrase}, {MediumDuration, HighEnergy}},
-  {{Flash, Dark, Phrase}, {ShortDuration, LowEnergy}},
+  {{Flash, Brighten, Beat, 20}, {MediumDuration, MediumEnergy}},
+  {{Flash, Darken, TwoBeats, 20}, {MediumDuration, MediumEnergy}},
+  {{Flash, Brighten, Measure}, {ShortDuration, HighEnergy}},
+  {{Flash, Brighten, Phrase}, {MediumDuration, HighEnergy}},
+  {{Flash, Darken, Phrase}, {ShortDuration, LowEnergy}},
   {{Glitter, White, Eighth, 10}, {ShortDuration, LowEnergy}},
   {{Glitter, White, Eighth, 20}, {MediumDuration, MediumEnergy}},
   {{Glitter, White, Eighth, 10}, {MediumDuration, HighEnergy}},

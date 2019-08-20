@@ -86,7 +86,7 @@ class PatternController : public MessageReceiver {
     this->effects = new Effects();
 
     for (uint8_t i=0; i < NUM_VSTRIPS; i++) {
-      this->vstrips[i] = new VirtualStrip();
+      this->vstrips[i] = new VirtualStrip(num_leds * 2 + 1);
     }
   }
   
@@ -414,7 +414,7 @@ class PatternController : public MessageReceiver {
         first_strip = vstrip;
      
       vstrip->update(beat_frame, beat_pulse);
-      vstrip->blend(this->led_strip->leds, this->options.brightness, vstrip == first_strip);
+      vstrip->blend(this->led_strip->leds, this->led_strip->num_leds, this->options.brightness, vstrip == first_strip);
     }
 
     this->effects->update(first_strip, beat_frame, (BeatPulse)beat_pulse);
@@ -450,6 +450,7 @@ class PatternController : public MessageReceiver {
   
       case COMMAND_HELLO:
         Serial.println(F("hello"));
+        this->updateTimer.stop();
         return;
   
       case COMMAND_OPTIONS: {
@@ -623,6 +624,11 @@ class PatternController : public MessageReceiver {
         this->next_state.effect_phrase = 0;
         this->next_state.effect_params = gEffects[(arg >> 8) % gEffectCount].params;
         this->radio->sendCommand(COMMAND_NEXT, &this->next_state, sizeof(this->next_state));
+        return;
+
+      case 'h':
+        // Pretend to receive a HELLO
+        this->onCommand(0, COMMAND_HELLO, NULL);
         return;
 
       case '?':

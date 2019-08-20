@@ -113,11 +113,11 @@ class Particle {
         strip[pos] = -strip[pos];
         break;  
 
-      case Bright:
+      case Brighten:
         strip[pos] *= 2;
         break;  
 
-      case Dark:
+      case Darken:
         strip[pos] /= 3;
         break;  
 

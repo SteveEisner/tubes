@@ -44,7 +44,7 @@ class VirtualStrip {
   const static uint16_t DEFAULT_BRIGHTNESS = 192;
 
   public:
-    CRGB leds[MAX_LEDS];
+    CRGB leds[MAX_VIRTUAL_LEDS];
     uint8_t num_leds;
     uint8_t brightness;
 
@@ -62,7 +62,7 @@ class VirtualStrip {
     bool beat_pulse;
     int bps = 0;
 
-  VirtualStrip(uint8_t num_leds=MAX_LEDS)
+  VirtualStrip(uint8_t num_leds)
   {
     this->fade = Dead;
     this->num_leds = num_leds;
@@ -168,20 +168,28 @@ class VirtualStrip {
     return CHSV(this->hue + offset, saturation, value);
   }
 
-  void blend(CRGB strip[], uint8_t brightness, bool overwrite=0) {
+  void blend(CRGB strip[], uint8_t num_leds, uint8_t brightness, bool overwrite=0) {
     if (this->fade == Dead)
       return;
 
     brightness = scale8(this->brightness, brightness);
+    brightness = scale8(this->fade>>8, brightness);
 
-    for (unsigned i=0; i < this->num_leds; i++) {
-      CRGB c = this->leds[i];
-      nscale8x3(c.r, c.g, c.b, brightness);
-      nscale8x3(c.r, c.g, c.b, this->fader>>8);
+    for (unsigned i=0; i < num_leds; i++) {
+      uint8_t pos = 2*i + 1;  // slope of line is fixed right now at 2:1
+
+      CRGB c1 = this->leds[pos-1];
+      CRGB c2 = this->leds[pos+1];
+
+      nblend(c1, this->leds[pos], 128);
+      nblend(c2, this->leds[pos], 128);
+      nblend(c1, c2, 128); // C1 is now a weighted average of the three virtual pixels
+
+      nscale8x3(c1.r, c1.g, c1.b, brightness);
       if (overwrite)
-        strip[i] = c;
+        strip[i] = c1;
       else
-        strip[i] |= c;
+        strip[i] |= c1;
     }
   }
   

@@ -11,7 +11,7 @@ typedef uint32_t BeatFrame_24_8;  // 24:8 bitwise float
 class BeatController {
   public:
     accum88 bpm = 0;
-    BeatFrame_24_8 frac = 0;
+    BeatFrame_24_8 frac;
     uint32_t accum = 0;
     uint32_t micros_per_frac;
 
