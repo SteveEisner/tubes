@@ -1957,6 +1957,7 @@ static const TProgmemRGBGradientPalettePtr gPalettes[] PROGMEM = {
   es_pinksplash_08_gp,
   es_pinksplash_07_gp,
   Coral_reef_gp,
+  
   es_ocean_breeze_068_gp,
   es_ocean_breeze_036_gp,
   departure_gp,
@@ -1967,6 +1968,7 @@ static const TProgmemRGBGradientPalettePtr gPalettes[] PROGMEM = {
   gr64_hult_gp,
   GMT_drywet_gp,
   ib15_gp,
+  
   Fuschia_7_gp,
   es_emerald_dragon_08_gp,
   lava_gp,
@@ -1977,6 +1979,7 @@ static const TProgmemRGBGradientPalettePtr gPalettes[] PROGMEM = {
   Pink_Purple_gp,
   Sunset_Real_gp,
   es_autumn_19_gp,
+  
   BlacK_Blue_Magenta_White_gp,
   BlacK_Magenta_Red_gp,
   BlacK_Red_Magenta_Yellow_gp,
@@ -1987,6 +1990,7 @@ static const TProgmemRGBGradientPalettePtr gPalettes[] PROGMEM = {
   bhw2_39_gp,
   rainfall_gp,
   tashangel_gp,
+  
   butterflytalker_gp,
   os250k_metres_gp,
   Night_Midnight_gp,
@@ -1997,6 +2001,7 @@ static const TProgmemRGBGradientPalettePtr gPalettes[] PROGMEM = {
   frizzell_09_gp,
   frizzell_10_gp,
   frizzell_12_gp,
+  
   fib53_01_gp,
   fib53_18_gp,
   fib53_07_gp,

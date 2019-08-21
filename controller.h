@@ -398,7 +398,7 @@ class PatternController : public MessageReceiver {
 
     uint8_t beat_pulse = 0;
     for (int i = 0; i < 8; i++) {
-      if ( (beat_frame >> (6+i)) != (lastFrame >> (6+i)))
+      if ( (beat_frame >> (5+i)) != (lastFrame >> (5+i)))
         beat_pulse |= 1<<i;
     }
     lastFrame = beat_frame;
@@ -630,6 +630,11 @@ class PatternController : public MessageReceiver {
         // Pretend to receive a HELLO
         this->onCommand(0, COMMAND_HELLO, NULL);
         return;
+
+      case 'g':
+        for (int i=0; i< 10; i++)
+          addGlitter();
+        break;
 
       case '?':
         Serial.println(F("b###.# - set bpm"));

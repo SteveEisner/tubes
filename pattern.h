@@ -7,7 +7,19 @@
 void rainbow(VirtualStrip *strip) 
 {
   // FastLED's built-in rainbow generator
-  fill_rainbow( strip->leds, strip->num_leds, strip->hue, 7);
+  fill_rainbow( strip->leds, strip->num_leds, strip->hue, 3);
+}
+
+void palette(VirtualStrip *strip) 
+{
+  // FastLED's built-in rainbow generator
+  uint8_t hue = strip->hue;
+  for (uint8_t i=0; i < strip->num_leds; i++) {
+    CRGB c = strip->palette_color(i, hue);
+    nscale8x3(c.r, c.g, c.b, sin8(hue*10));
+    strip->leds[i] = c;
+    hue++;
+  }
 }
 
 void particleTest(VirtualStrip *strip)
@@ -90,7 +102,7 @@ void bpm(VirtualStrip *strip)
 void juggle(VirtualStrip *strip) 
 {
   // eight colored dots, weaving in and out of sync with each other
-  strip->darken(20);
+  strip->darken(5);
 
   byte dothue = 0;
   for( int i = 0; i < 8; i++) {
@@ -150,10 +162,14 @@ PatternDef gPatterns[] = {
   {rainbow, {ShortDuration}},
   {confetti, {ShortDuration}},
   {confetti, {MediumDuration}},
+
   {juggle, {ShortDuration}},
   {bpm, {ShortDuration}},
   {bpm, {MediumDuration, HighEnergy}},
+  {palette, {ShortDuration}},
+  {solidBlack, {LongDuration}},
 };
+
 /*
 */
 const uint8_t gPatternCount = ARRAY_SIZE(gPatterns);

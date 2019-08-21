@@ -96,6 +96,8 @@ class Particle {
   }
 
   void draw_with_pen(CRGB strip[], int pos, CRGB color) {
+    CRGB new_color;
+    
     switch (this->pen) {
       case Draw:  
         strip[pos] = color;
@@ -114,11 +116,13 @@ class Particle {
         break;  
 
       case Brighten:
-        strip[pos] *= 2;
+        new_color = CRGB(color.getAverageLight(), color.getAverageLight(), color.getAverageLight());
+        strip[pos] += new_color;
         break;  
 
       case Darken:
-        strip[pos] /= 3;
+        new_color = CRGB(color.getAverageLight(), color.getAverageLight(), color.getAverageLight());
+        strip[pos] -= new_color;
         break;  
 
       case White:

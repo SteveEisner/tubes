@@ -173,23 +173,79 @@ class VirtualStrip {
       return;
 
     brightness = scale8(this->brightness, brightness);
-    brightness = scale8(this->fade>>8, brightness);
 
     for (unsigned i=0; i < num_leds; i++) {
-      uint8_t pos = 2*i + 1;  // slope of line is fixed right now at 2:1
+      uint8_t pos = (2*i + 1) % this->num_leds;  // slope of line is fixed right now at 2:1
 
+      CRGB c = this->leds[pos];
       CRGB c1 = this->leds[pos-1];
       CRGB c2 = this->leds[pos+1];
+ #ifdef NONO
+      if (i == 0) {
+        Serial.print(c1.r, HEX);
+        Serial.print(" ");
+        Serial.print(c1.g, HEX);
+        Serial.print(" ");
+        Serial.print(c1.b, HEX);
+        Serial.print(", ");
+        Serial.print(c.r, HEX);
+        Serial.print(" ");
+        Serial.print(c.g, HEX);
+        Serial.print(" ");
+        Serial.print(c.b, HEX);
+        Serial.print(", ");
+        Serial.print(c2.r, HEX);
+        Serial.print(" ");
+        Serial.print(c2.g, HEX);
+        Serial.print(" ");
+        Serial.print(c2.b, HEX);
+        Serial.print(" ");
+      }
+#endif
+         
+      nblend(c1, c, 128);
+#ifdef NONO
+      if (i == 0) {
+        Serial.print("=1=> ");
+        Serial.print(c1.r, HEX);
+        Serial.print(" ");
+        Serial.print(c1.g, HEX);
+        Serial.print(" ");
+        Serial.print(c1.b, HEX);
+        Serial.print(", ");
+      }
+ #endif
+ 
+      nblend(c, c2, 128);
+ #ifdef NONO
+      if (i == 0) {
+        Serial.print("=1=> ");
+        Serial.print(c.r, HEX);
+        Serial.print(" ");
+        Serial.print(c.g, HEX);
+        Serial.print(" ");
+        Serial.print(c.b, HEX);
+        Serial.print(", ");
+      }
+#endif
 
-      nblend(c1, this->leds[pos], 128);
-      nblend(c2, this->leds[pos], 128);
-      nblend(c1, c2, 128); // C1 is now a weighted average of the three virtual pixels
-
-      nscale8x3(c1.r, c1.g, c1.b, brightness);
+      nblend(c, c1, 128); // C is now a weighted average of the three virtual pixels
+#ifdef NONO
+      if (i == 0) {
+        Serial.print(c.r, HEX);
+        Serial.print(" ");
+        Serial.print(c.g, HEX);
+        Serial.print(" ");
+        Serial.print(c.b, HEX);
+        Serial.println();
+      }
+#endif
+      nscale8x3(c.r, c.g, c.b, brightness);
+      nscale8x3(c.r, c.g, c.b, this->fader>>8);
       if (overwrite)
-        strip[i] = c1;
+        strip[i] = c;
       else
-        strip[i] |= c1;
+        strip[i] |= c;
     }
   }
   

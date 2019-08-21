@@ -149,7 +149,7 @@ class Effects {
             break;
       
           case Flash:
-            addFlash(color, this->pen);
+            addFlash(CRGB::White, this->pen);
             break;  
         }
       }
@@ -200,12 +200,13 @@ static const EffectDef gEffects[] PROGMEM = {
   {{Glitter, White, Eighth, 20}, {MediumDuration, MediumEnergy}},
   {{Glitter, White, Eighth, 10}, {MediumDuration, HighEnergy}},
   {{Glitter, Black, Eighth, 10}, {MediumDuration, LowEnergy}},
+
   {{Glitter, Draw, Eighth, 10}, {LongDuration, LowEnergy}},
   {{Glitter, Draw, Eighth, 120}, {MediumDuration, LowEnergy}},
   {{Glitter, Invert, Eighth, 40}, {ShortDuration, LowEnergy}},
   {{Beatbox2, Black}, {MediumDuration, LowEnergy}},
   {{Beatbox2, Draw}, {ShortDuration, HighEnergy}},
-  {{Bubble, Black}, {MediumDuration, LowEnergy}},
+  {{Bubble, Brighten}, {MediumDuration, LowEnergy}},
 };
 const uint8_t gEffectCount = ARRAY_SIZE(gEffects);
 
