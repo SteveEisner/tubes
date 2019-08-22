@@ -206,6 +206,7 @@ static const EffectDef gEffects[] PROGMEM = {
   {{Glitter, Invert, Eighth, 40}, {ShortDuration, LowEnergy}},
   {{Beatbox2, Black}, {MediumDuration, LowEnergy}},
   {{Beatbox2, Draw}, {ShortDuration, HighEnergy}},
+  {{Bubble, Darken}, {MediumDuration, LowEnergy}},
   {{Bubble, Brighten}, {MediumDuration, LowEnergy}},
 };
 const uint8_t gEffectCount = ARRAY_SIZE(gEffects);

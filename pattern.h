@@ -50,7 +50,7 @@ void solidBlue(VirtualStrip *strip)
 
 void confetti(VirtualStrip *strip) 
 {
-  strip->darken(8);
+  strip->darken(2);
   
   int pos = random16(strip->num_leds);
   strip->leds[pos] += strip->palette_color(random8(64), strip->hue);
@@ -166,8 +166,7 @@ PatternDef gPatterns[] = {
   {juggle, {ShortDuration}},
   {bpm, {ShortDuration}},
   {bpm, {MediumDuration, HighEnergy}},
-  {palette, {ShortDuration}},
-  {solidBlack, {LongDuration}},
+  {palette, {ShortDuration}}
 };
 
 /*

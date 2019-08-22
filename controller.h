@@ -86,13 +86,21 @@ class PatternController : public MessageReceiver {
     this->effects = new Effects();
 
     for (uint8_t i=0; i < NUM_VSTRIPS; i++) {
+#ifdef DOUBLED
       this->vstrips[i] = new VirtualStrip(num_leds * 2 + 1);
+#else
+      this->vstrips[i] = new VirtualStrip(num_leds);
+#endif
     }
   }
   
   void setup()
   {
+#ifdef MASTERCONTROL
     this->options.debugging = true;
+#else
+    this->options.debugging = false;
+#endif
     this->options.brightness = DEFAULT_MASTER_BRIGHTNESS;
     
     this->lcd->setup();
