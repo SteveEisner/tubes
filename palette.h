@@ -727,6 +727,7 @@ DEFINE_GRADIENT_PALETTE( IKat_Radial_gp ) {
   127,   3,  7,  4,
   196, 255,255,255,
   255,   3,  7,  4};
+  
 // Gradient palette "Citrus_gp", originally from
 // http://soliton.vm.bytemark.co.uk/pub/cpt-city/lb/misc/tn/Citrus.png.index.html
 // converted for FastLED with gammas (2.6, 2.2, 2.5)
@@ -734,9 +735,9 @@ DEFINE_GRADIENT_PALETTE( IKat_Radial_gp ) {
 
 DEFINE_GRADIENT_PALETTE( Citrus_gp ) {
     0, 252,164,  5,
-   63, 249,125,  3,
+   63, 149,25,  3,
   135, 255,166,  9,
-  201, 247,139,  3,
+  201, 147,39,  3,
   255, 237,119,  4};
 
 // Gradient palette "Teal_Blue_gp", originally from
@@ -2012,6 +2013,7 @@ static const TProgmemRGBGradientPalettePtr gPalettes[] PROGMEM = {
   Analogous_04a_gp,
   Cyan_Orange_Stripped_gp,
   Cyan_White_Green_gp,
+
   Wild_Orange_gp,
   IKat_Radial_gp,
   Citrus_gp,
@@ -2022,6 +2024,7 @@ static const TProgmemRGBGradientPalettePtr gPalettes[] PROGMEM = {
   green_purple_d07_gp,
   knoza_00_gp,
   knoza_18_gp,
+
   calpan_18_gp,
   calbayo_18_gp,
   fib53_15_gp,

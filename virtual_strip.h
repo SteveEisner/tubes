@@ -8,14 +8,6 @@
 class VirtualStrip;
 typedef void (*BackgroundFn)(VirtualStrip *strip);
 
-typedef enum SyncMode {
-  All=0,
-  SinDrift=1,
-  Pulse=2,
-  Swing=3,
-  SwingDrift=4,
-} SyncMode;
-
 class Background {
   public:
     BackgroundFn animate;
@@ -201,11 +193,12 @@ class VirtualStrip {
   
   uint8_t bpm_sin16( uint16_t lowest=0, uint16_t highest=65535 )
   {
-    uint16_t beatsin = sin16( this->frame << 7 ) + 32768;
-    uint16_t rangewidth = highest - lowest;
-    uint16_t scaledbeat = scale16( beatsin, rangewidth );
-    uint16_t result = lowest + scaledbeat;
-    return result;
+    return scaled16to8(sin16( this->frame << 7 ) + 32768, lowest, highest);
+  }
+
+  uint8_t bpm_cos16( uint16_t lowest=0, uint16_t highest=65535 )
+  {
+    return scaled16to8(cos16( this->frame << 7 ) + 32768, lowest, highest);
   }
 
 };

@@ -115,15 +115,29 @@ class Particle {
         strip[pos] = -strip[pos];
         break;  
 
-      case Brighten:
-        new_color = CRGB(color.getAverageLight(), color.getAverageLight(), color.getAverageLight());
+      case Brighten: {
+        uint8_t t = color.getAverageLight();
+        new_color = CRGB(t,t,t);
         strip[pos] += new_color;
         break;  
+      }
 
-      case Darken:
-        new_color = CRGB(color.getAverageLight(), color.getAverageLight(), color.getAverageLight());
+      case Darken: {
+        uint8_t t = color.getAverageLight();
+        new_color = CRGB(t,t,t);
         strip[pos] -= new_color;
         break;  
+      }
+
+      case Flicker: {
+        uint8_t t = color.getAverageLight();
+        new_color = CRGB(t,t,t);
+        if (millis() % 2)
+          strip[pos] -= new_color;
+        else
+          strip[pos] += new_color;
+        break;  
+      }
 
       case White:
         strip[pos] = CRGB::White;

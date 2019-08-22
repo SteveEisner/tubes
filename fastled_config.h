@@ -37,4 +37,11 @@ FASTLED_USING_NAMESPACE
 #warning "Requires FastLED 3.1 or later"
 #endif
 
+uint8_t scaled16to8( uint16_t v, uint16_t lowest=0, uint16_t highest=65535) {
+  uint16_t rangewidth = highest - lowest;
+  uint16_t scaledbeat = scale16( v, rangewidth );
+  uint16_t result = lowest + scaledbeat;
+  return result;
+}
+
 #endif

@@ -313,7 +313,9 @@ class PatternController : public MessageReceiver {
   }
 
   void load_effect(TubeState &tube_state) {
-    if (this->current_state.effect_params.effect == tube_state.effect_params.effect)
+    if (this->current_state.effect_params.effect == tube_state.effect_params.effect && 
+        this->current_state.effect_params.pen == tube_state.effect_params.pen && 
+        this->current_state.effect_params.chance == tube_state.effect_params.chance)
       return;
 
     this->current_state.effect_params = tube_state.effect_params;
@@ -667,5 +669,12 @@ class PatternController : public MessageReceiver {
   }
 
 };
+
+
+
+// What's interesting?
+// c53 - clouds
+// m4 - swing drift
+
 
 #endif

@@ -1,6 +1,13 @@
 #ifndef OPTIONS_H
 #define OPTIONS_H
 
+typedef enum SyncMode {
+  All=0,
+  SinDrift=1,
+  Pulse=2,
+  Swing=3,
+  SwingDrift=4,
+} SyncMode;
 
 typedef enum Duration: uint8_t {
   ShortDuration=0,
@@ -29,6 +36,7 @@ typedef enum PenMode: uint8_t {
   Black=5,
   Brighten=6,
   Darken=7,
+  Flicker=8,
 } PenMode;
 
 typedef enum EffectMode: uint8_t {

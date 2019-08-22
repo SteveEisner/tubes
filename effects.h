@@ -191,14 +191,14 @@ typedef struct {
 
 static const EffectDef gEffects[] PROGMEM = {
   {{None}, {LongDuration}},
-  {{Flash, Brighten, Beat, 20}, {MediumDuration, MediumEnergy}},
+  {{Flash, Brighten, Beat, 40}, {MediumDuration, MediumEnergy}},
   {{Flash, Darken, TwoBeats, 40}, {MediumDuration, MediumEnergy}},
   {{Flash, Brighten, Measure}, {ShortDuration, HighEnergy}},
   {{Flash, Brighten, Phrase}, {MediumDuration, HighEnergy}},
-  {{Flash, Darken, Phrase}, {ShortDuration, LowEnergy}},
-  {{Glitter, Brighten, Eighth, 30}, {ShortDuration, LowEnergy}},
-  {{Glitter, Brighten, Eighth, 60}, {MediumDuration, MediumEnergy}},
-  {{Glitter, Brighten, Eighth, 30}, {MediumDuration, HighEnergy}},
+  {{Flash, Darken, Measure}, {ShortDuration, LowEnergy}},
+  {{Glitter, Brighten, Eighth, 40}, {ShortDuration, LowEnergy}},
+  {{Glitter, Brighten, Eighth, 80}, {MediumDuration, MediumEnergy}},
+  {{Glitter, Brighten, Eighth, 40}, {MediumDuration, HighEnergy}},
   {{Glitter, Darken, Eighth, 40}, {MediumDuration, LowEnergy}},
 
   {{Glitter, Draw, Eighth, 10}, {LongDuration, LowEnergy}},
@@ -208,6 +208,8 @@ static const EffectDef gEffects[] PROGMEM = {
   {{Beatbox2, Draw}, {ShortDuration, HighEnergy}},
   {{Bubble, Darken}, {MediumDuration, LowEnergy}},
   {{Bubble, Brighten}, {MediumDuration, LowEnergy}},
+  {{Glitter, Darken, Eighth, 120}, {MediumDuration, LowEnergy}},
+  {{Glitter, Flicker, Eighth, 120}, {MediumDuration, LowEnergy}},
 };
 const uint8_t gEffectCount = ARRAY_SIZE(gEffects);
 

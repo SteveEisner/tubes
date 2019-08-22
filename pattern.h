@@ -10,13 +10,13 @@ void rainbow(VirtualStrip *strip)
   fill_rainbow( strip->leds, strip->num_leds, strip->hue, 3);
 }
 
-void palette(VirtualStrip *strip) 
+void palette_wave(VirtualStrip *strip) 
 {
   // FastLED's built-in rainbow generator
   uint8_t hue = strip->hue;
   for (uint8_t i=0; i < strip->num_leds; i++) {
     CRGB c = strip->palette_color(i, hue);
-    nscale8x3(c.r, c.g, c.b, sin8(hue*10));
+    nscale8x3(c.r, c.g, c.b, sin8(hue*8));
     strip->leds[i] = c;
     hue++;
   }
@@ -60,13 +60,15 @@ uint16_t random_offset = random16();
 
 void biwave(VirtualStrip *strip)
 {
-  uint16_t frame = (uint16_t)(swing(strip->frame % 512) << 7);
+  uint16_t l = strip->frame * 16;
+  l = sin16( l + random_offset ) + 32768;
 
-  uint16_t l = sin16(frame+random_offset) + 32768;
-  uint16_t r = sin16(frame+random_offset+4000) + 32768;
+  uint16_t r = strip->frame * 32;
+  r = cos16( r + random_offset ) + 32768;
+
+  uint8_t p1 = scaled16to8(l, 0, strip->num_leds-1);
+  uint8_t p2 = scaled16to8(r, 0, strip->num_leds-1);
   
-  uint16_t p1 = scale16(l, strip->num_leds-1);
-  uint16_t p2 = scale16(r, strip->num_leds-1);
   if (p2 < p1) {
     uint16_t t = p1;
     p1 = p2;
@@ -75,7 +77,7 @@ void biwave(VirtualStrip *strip)
 
   strip->fill(CRGB::Black);
   for (uint16_t p = p1; p <= p2; p++) {
-    strip->leds[p] = strip->palette_color(strip->hue);
+    strip->leds[p] = strip->palette_color(p*2, strip->hue*3);
   }
 }
 
@@ -176,8 +178,8 @@ PatternDef gPatterns[] = {
   {juggle, {ShortDuration}},
   {bpm, {ShortDuration}},
   {bpm, {MediumDuration, HighEnergy}},
-  {palette, {ShortDuration}},
-  {palette, {MediumDuration}},
+  {palette_wave, {ShortDuration}},
+  {palette_wave, {MediumDuration}},
   {bpm_palette, {ShortDuration}},
   {bpm_palette, {MediumDuration, HighEnergy}}
 };
