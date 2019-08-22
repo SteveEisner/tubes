@@ -127,7 +127,6 @@ class VirtualStrip {
         break;
     }
     this->hue = (this->frame >> 4) % 256;
-
     this->beat = (this->frame >> 8) % 16;
     this->beat_pulse = beat_pulse;
 
@@ -202,7 +201,7 @@ class VirtualStrip {
   
   uint8_t bpm_sin16( uint16_t lowest=0, uint16_t highest=65535 )
   {
-    uint16_t beatsin = sin16( this->beat16 << 7 ) + 32768;
+    uint16_t beatsin = sin16( this->frame << 7 ) + 32768;
     uint16_t rangewidth = highest - lowest;
     uint16_t scaledbeat = scale16( beatsin, rangewidth );
     uint16_t result = lowest + scaledbeat;

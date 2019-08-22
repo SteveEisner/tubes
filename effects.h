@@ -6,7 +6,7 @@
 
 void addGlitter(CRGB color=CRGB::White, PenMode pen=Draw) 
 {
-  addParticle(new Particle(random16(), CRGB::White, pen, 128));
+  addParticle(new Particle(random16(), color, pen, 128));
 }
 
 void addSpark(CRGB color=CRGB::White, PenMode pen=Draw) 
@@ -192,14 +192,14 @@ typedef struct {
 static const EffectDef gEffects[] PROGMEM = {
   {{None}, {LongDuration}},
   {{Flash, Brighten, Beat, 20}, {MediumDuration, MediumEnergy}},
-  {{Flash, Darken, TwoBeats, 20}, {MediumDuration, MediumEnergy}},
+  {{Flash, Darken, TwoBeats, 40}, {MediumDuration, MediumEnergy}},
   {{Flash, Brighten, Measure}, {ShortDuration, HighEnergy}},
   {{Flash, Brighten, Phrase}, {MediumDuration, HighEnergy}},
   {{Flash, Darken, Phrase}, {ShortDuration, LowEnergy}},
-  {{Glitter, White, Eighth, 10}, {ShortDuration, LowEnergy}},
-  {{Glitter, White, Eighth, 20}, {MediumDuration, MediumEnergy}},
-  {{Glitter, White, Eighth, 10}, {MediumDuration, HighEnergy}},
-  {{Glitter, Black, Eighth, 10}, {MediumDuration, LowEnergy}},
+  {{Glitter, Brighten, Eighth, 30}, {ShortDuration, LowEnergy}},
+  {{Glitter, Brighten, Eighth, 60}, {MediumDuration, MediumEnergy}},
+  {{Glitter, Brighten, Eighth, 30}, {MediumDuration, HighEnergy}},
+  {{Glitter, Darken, Eighth, 40}, {MediumDuration, LowEnergy}},
 
   {{Glitter, Draw, Eighth, 10}, {LongDuration, LowEnergy}},
   {{Glitter, Draw, Eighth, 120}, {MediumDuration, LowEnergy}},

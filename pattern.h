@@ -88,6 +88,16 @@ void sinelon(VirtualStrip *strip)
   strip->leds[pos] += strip->hue_color();
 }
 
+void bpm_palette(VirtualStrip *strip) 
+{
+  uint8_t beat = strip->bpm_sin16(64, 255);
+  for (int i = 0; i < strip->num_leds; i++) {
+    CRGB c = strip->palette_color(i*2, strip->hue);
+    nscale8x3(c.r, c.g, c.b, beat-strip->hue+(i*10));
+    strip->leds[i] = c;
+  }
+}
+
 void bpm(VirtualStrip *strip) 
 {
   // colored stripes pulsing at a defined Beats-Per-Minute (BPM)
@@ -166,7 +176,10 @@ PatternDef gPatterns[] = {
   {juggle, {ShortDuration}},
   {bpm, {ShortDuration}},
   {bpm, {MediumDuration, HighEnergy}},
-  {palette, {ShortDuration}}
+  {palette, {ShortDuration}},
+  {palette, {MediumDuration}},
+  {bpm_palette, {ShortDuration}},
+  {bpm_palette, {MediumDuration, HighEnergy}}
 };
 
 /*

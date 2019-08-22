@@ -45,7 +45,8 @@ class Timer {
   }
 
   void snooze(uint32_t duration_ms) {
-    this->endTime += duration_ms;
+    while (this->endTime < globalTimer.now_millis)
+      this->endTime += duration_ms;
   }
 
   bool ended() {

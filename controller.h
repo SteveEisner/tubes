@@ -634,6 +634,13 @@ class PatternController : public MessageReceiver {
         this->radio->sendCommand(COMMAND_NEXT, &this->next_state, sizeof(this->next_state));
         return;
 
+      case '%':
+        this->next_state.effect_phrase = 0;
+        this->next_state.effect_params = this->current_state.effect_params;
+        this->next_state.effect_params.chance = arg;
+        this->radio->sendCommand(COMMAND_NEXT, &this->next_state, sizeof(this->next_state));
+        return;
+
       case 'h':
         // Pretend to receive a HELLO
         this->onCommand(0, COMMAND_HELLO, NULL);
