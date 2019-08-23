@@ -13,8 +13,6 @@
 #include "lcd.h"
 #include "radio.h"
 
-#include <EasyButton.h>
-
 #define X_AXIS_PIN 20
 #define Y_AXIS_PIN 21
 
@@ -22,10 +20,7 @@
 #define BUTTON_PIN_2   3
 #define BUTTON_PIN_3   4
 #define BUTTON_PIN_4   5
-EasyButton button1(BUTTON_PIN_1);
-EasyButton button2(BUTTON_PIN_2);
-EasyButton button3(BUTTON_PIN_3);
-EasyButton button4(BUTTON_PIN_4);
+#define BUTTON_PIN_5   15
 
 const static uint8_t DEFAULT_MASTER_BRIGHTNESS = 144;
 
@@ -48,6 +43,36 @@ typedef struct {
 
 #define NUM_VSTRIPS 3
 
+#define DEBOUNCE_TIME 40
+
+class Button {
+  public:
+    Timer debounceTimer;
+    uint8_t pin;
+    bool lastPressed = false;
+
+  void setup(uint8_t pin) {
+    this->pin = pin;
+    pinMode(pin, INPUT_PULLUP);
+  }
+
+  bool pressed() {
+    if (digitalRead(this->pin) == HIGH) {
+      return !this->debounceTimer.ended();
+    }
+
+    this->debounceTimer.start(DEBOUNCE_TIME);
+    return true;
+  }
+
+  bool triggered() {
+    bool p = this->pressed();
+    bool lp = this->lastPressed;
+    this->lastPressed = p;
+    return p && (p != lp);
+  }
+};
+
 class PatternController : public MessageReceiver {
   public:
     const static int FRAMES_PER_SECOND = 300;  // how often we animate, in frames per second
@@ -61,6 +86,9 @@ class PatternController : public MessageReceiver {
     Timer updateTimer;
     Timer slaveTimer;
 
+    Button button[5];
+
+    bool isMaster=false;
     Lcd *lcd;
     LEDs *led_strip;
     BeatController *beats;
@@ -69,6 +97,8 @@ class PatternController : public MessageReceiver {
 
     uint8_t x_axis;
     uint8_t y_axis;
+    uint8_t joystick_angle=0;
+    uint8_t joystick_distance=0;
     uint16_t b;
     ControllerOptions options;
     char key_buffer[20] = {0};
@@ -92,15 +122,13 @@ class PatternController : public MessageReceiver {
       this->vstrips[i] = new VirtualStrip(num_leds);
 #endif
     }
+
   }
   
-  void setup()
+  void setup(bool isMaster)
   {
-#ifdef MASTERCONTROL
-    this->options.debugging = true;
-#else
+    this->isMaster = isMaster;
     this->options.debugging = false;
-#endif
     this->options.brightness = DEFAULT_MASTER_BRIGHTNESS;
     
     this->lcd->setup();
@@ -115,13 +143,14 @@ class PatternController : public MessageReceiver {
     this->next_state.effect_phrase = 0;
     Serial.println(F("Patterns: ok"));
 
-    button1.begin();
-    button2.begin();
-    button3.begin();
-    button4.begin();
+    this->button[0].setup(BUTTON_PIN_1);
+    this->button[1].setup(BUTTON_PIN_2);
+    this->button[2].setup(BUTTON_PIN_3);
+    this->button[3].setup(BUTTON_PIN_4);
+    this->button[4].setup(BUTTON_PIN_5);
     Serial.println(F("Controls: ok"));
 
-    this->radio->setup();
+    this->radio->setup(this->isMaster);
     this->radio->sendCommand(COMMAND_HELLO);
 
     this->slaveTimer.start(RADIO_SENDPERIOD * 3); // Assume we're a slave at first, just listen for a master.
@@ -130,42 +159,33 @@ class PatternController : public MessageReceiver {
 
   void update()
   {
-    button1.read();
-    button2.read();
-    button3.read();
-    button4.read();
-
-    button1.read();
-    if (button1.isPressed()) {
-      this->onButton(1);
-    }
-    button2.read();
-    if (button2.isPressed()) {
-      this->onButton(2);
-    }
-    button1.read();
-    if (button1.isPressed()) {
-      this->onButton(3);
-    }
-    button1.read();
-    if (button1.isPressed()) {
-      this->onButton(4);
-    }
-
- #ifdef USEJOYSTICK
-    this->x_axis = analogRead(X_AXIS_PIN) >> 3;
-    this->y_axis = analogRead(Y_AXIS_PIN) >> 3;
-
-    if (this->x_axis > 100) {
-      if (!this->options.debugging) {
-        this->setDebugging(1);
+    for (uint8_t i=0; i < 5; i++) {
+      if (button[i].triggered()) {
+        this->onButton(i);
       }
-      this->beats->set_bpm(DEFAULT_BPM << 8);
-    } else if (this->x_axis < 30)
-      if (this->options.debugging) {
-        this->setDebugging(0);
-      }
-#endif
+    }
+
+    if (this->isMaster) {
+      double x = analogRead(X_AXIS_PIN)-512;
+      double y = analogRead(Y_AXIS_PIN)-512;
+      this->x_axis = int(x) >> 2;
+      this->y_axis = int(y) >> 2;
+      double deg = atan2(x,y);
+      if (deg < 0)
+        deg = 6.28+deg;
+      deg = (256.0/6.28) * deg;
+      this->joystick_angle = int(deg + 8) >> 4 << 4;
+      this->joystick_distance = sqrt16( x*x + y*y ) >> 4;
+//      Serial.print(x);
+//      Serial.print(" ");
+//      Serial.print(y);
+//      Serial.print(" ");
+//      Serial.println(this->joystick_distance);
+    } else {
+      this->x_axis = 128;
+      this->y_axis = 128;
+      this->joystick_angle = 0;
+    }
 
     this->read_keys();
 
@@ -238,7 +258,7 @@ class PatternController : public MessageReceiver {
       this->updateTimer.snooze( this->radio->tubeId & 0x7F );
       this->radio->radioFailures++;
       if (this->radio->radioFailures > 100) {
-        this->radio->setup();
+        this->radio->setup(this->isMaster);
         this->radio->radioRestarts++;
       }
     }
@@ -359,12 +379,23 @@ class PatternController : public MessageReceiver {
   }
 
   void onButton(uint8_t button) {
-    if (button == 1) {
-      Serial.print(F("Button "));
-      Serial.println(button);
-      this->radio->sendCommand(COMMAND_FIREWORK, NULL, 0);
+    if (button == 0) {
+      this->setBrightness(sin8(this->joystick_angle));
       return;
     }
+    if (button == 1) {
+      this->beats->start_phrase();
+      this->update_beat();
+      this->send_update();
+      return;
+    }
+    if (button == 2) {
+      this->force_next();
+      return;
+    }
+    Serial.print(F("Button "));
+    Serial.println(button);
+    this->radio->sendCommand(COMMAND_FIREWORK, NULL, 0);
   }
 
   void optionsChanged() {
@@ -610,37 +641,41 @@ class PatternController : public MessageReceiver {
         this->send_update();
         return;
 
+      case 'n':
+        this->force_next();
+        return;
+
       case 'p':
         this->next_state.pattern_phrase = 0;
         this->next_state.pattern_id = arg >> 8;
         this->next_state.pattern_sync_id = All;
-        this->radio->sendCommand(COMMAND_NEXT, &this->next_state, sizeof(this->next_state));
+        this->update_next();
         return;        
         
       case 'm':
         this->next_state.pattern_phrase = 0;
         this->next_state.pattern_id = this->current_state.pattern_id;
         this->next_state.pattern_sync_id = arg >> 8;
-        this->radio->sendCommand(COMMAND_NEXT, &this->next_state, sizeof(this->next_state));
+        this->update_next();
         return;
         
       case 'c':
         this->next_state.palette_phrase = 0;
         this->next_state.palette_id = arg >> 8;
-        this->radio->sendCommand(COMMAND_NEXT, &this->next_state, sizeof(this->next_state));
+        this->update_next();
         return;
         
       case 'e':
         this->next_state.effect_phrase = 0;
         this->next_state.effect_params = gEffects[(arg >> 8) % gEffectCount].params;
-        this->radio->sendCommand(COMMAND_NEXT, &this->next_state, sizeof(this->next_state));
+        this->update_next();
         return;
 
       case '%':
         this->next_state.effect_phrase = 0;
         this->next_state.effect_params = this->current_state.effect_params;
         this->next_state.effect_params.chance = arg;
-        this->radio->sendCommand(COMMAND_NEXT, &this->next_state, sizeof(this->next_state));
+        this->update_next();
         return;
 
       case 'h':
@@ -666,6 +701,19 @@ class PatternController : public MessageReceiver {
         Serial.println(F("d - toggle debugging"));
         Serial.println(F("l### - brightness"));
     }
+  }
+
+  void force_next() {
+    uint16_t phrase = this->current_state.beat_frame >> 12;
+    uint16_t next_phrase = min(this->next_state.pattern_phrase, min(this->next_state.palette_phrase, this->next_state.effect_phrase)) - phrase;
+    this->next_state.pattern_phrase -= next_phrase;
+    this->next_state.palette_phrase -= next_phrase;
+    this->next_state.effect_phrase -= next_phrase;
+    this->update_next();
+  }
+
+  void update_next() {
+    this->radio->sendCommand(COMMAND_NEXT, &this->next_state, sizeof(this->next_state));
   }
 
 };

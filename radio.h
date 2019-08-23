@@ -65,11 +65,7 @@ uint16_t calculate_crc( byte *data, byte len ) {
 }
 
 uint8_t newTubeId() {
-#ifdef MASTERCONTROL
-  return random(250, 255);
-#else
-  return random(10, 250);
-#endif
+  return random(10, 250); // Leave room for master
 }
 
 void printMessageData(RadioMessage &message, int size) {
@@ -96,8 +92,11 @@ class Radio {
     unsigned long radioFailures = 0;
     unsigned long radioRestarts = 0;
 
-  void setup() {
-    this->resetId();
+  void setup(bool isMaster) {
+    if (isMaster)
+      this->resetId(254);
+    else
+      this->resetId();
   
 #ifdef USERADIO
     SPI.setSCK(PIN_RADIO_SCK);

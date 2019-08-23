@@ -28,13 +28,15 @@ class DebugController {
       Serial.println( freeMemory() );
     }
 
-    if (this->controller->options.debugging) {
-      uint8_t p1 = (this->controller->current_state.beat_frame >> 8) % 16;
+    // Show the beat on the master OR if debugging
+    uint8_t p1 = (this->controller->current_state.beat_frame >> 8) % 16;
+    if (this->controller->isMaster || this->controller->options.debugging)
       this->strip->leds[p1] = CRGB::White;
-  
+
+    if (this->controller->options.debugging) {
       uint8_t p2 = scale8(this->controller->radio->tubeId, this->strip->num_leds-1);
       this->strip->leds[p2] = CRGB::White;
-  
+
       uint8_t p3 = scale8(this->controller->radio->masterTubeId, this->strip->num_leds-1);
       if (p3 == p2) {
         this->strip->leds[p3] = CRGB::Green;

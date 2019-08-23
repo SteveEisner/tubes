@@ -8,6 +8,7 @@
 
 // #define MASTERCONTROL
 
+#define MASTER_PIN 6
 #ifdef MASTERCONTROL
 
 #define NUM_LEDS 16
@@ -48,10 +49,13 @@ void setup() {
   Serial.begin(115200);
   randomize(analogRead(0));
 
+  pinMode(MASTER_PIN, INPUT_PULLUP);
+  bool isMaster = digitalRead(MASTER_PIN) == LOW;
+
   // Start timing
   globalTimer.setup();
   beats.setup();
-  controller.setup();
+  controller.setup(isMaster);
   debug.setup();
 }
 
