@@ -10,17 +10,10 @@
 
 
 #include "led_strip.h"
+#ifdef USELCD
 #include "lcd.h"
+#endif
 #include "radio.h"
-
-#define X_AXIS_PIN 20
-#define Y_AXIS_PIN 21
-
-#define BUTTON_PIN_1   2
-#define BUTTON_PIN_2   3
-#define BUTTON_PIN_3   4
-#define BUTTON_PIN_4   5
-#define BUTTON_PIN_5   15
 
 const static uint8_t DEFAULT_MASTER_BRIGHTNESS = 144;
 
@@ -81,25 +74,20 @@ class PatternController : public MessageReceiver {
     uint8_t num_leds;
     VirtualStrip *vstrips[NUM_VSTRIPS];
     uint8_t next_vstrip = 0;
+    bool isMaster = false;
     
     Timer graphicsTimer;
     Timer updateTimer;
     Timer slaveTimer;
 
-    Button button[5];
-
-    bool isMaster=false;
+#ifdef USELCD
     Lcd *lcd;
+#endif
     LEDs *led_strip;
     BeatController *beats;
     Radio *radio;
     Effects *effects;
 
-    uint8_t x_axis;
-    uint8_t y_axis;
-    uint8_t joystick_angle=0;
-    uint8_t joystick_distance=0;
-    uint16_t b;
     ControllerOptions options;
     char key_buffer[20] = {0};
 
@@ -109,7 +97,9 @@ class PatternController : public MessageReceiver {
 
   PatternController(uint8_t num_leds, BeatController *beats, Radio *radio) {
     this->num_leds = num_leds;
+#ifdef USELCD
     this->lcd = new Lcd();
+#endif
     this->led_strip = new LEDs(num_leds);
     this->beats = beats;
     this->radio = radio;
@@ -130,8 +120,10 @@ class PatternController : public MessageReceiver {
     this->isMaster = isMaster;
     this->options.debugging = false;
     this->options.brightness = DEFAULT_MASTER_BRIGHTNESS;
-    
+
+#ifdef USELCD
     this->lcd->setup();
+#endif
     this->led_strip->setup();
     Serial.println(F("Graphics: ok"));
 
@@ -143,13 +135,6 @@ class PatternController : public MessageReceiver {
     this->next_state.effect_phrase = 0;
     Serial.println(F("Patterns: ok"));
 
-    this->button[0].setup(BUTTON_PIN_1);
-    this->button[1].setup(BUTTON_PIN_2);
-    this->button[2].setup(BUTTON_PIN_3);
-    this->button[3].setup(BUTTON_PIN_4);
-    this->button[4].setup(BUTTON_PIN_5);
-    Serial.println(F("Controls: ok"));
-
     this->radio->setup(this->isMaster);
     this->radio->sendCommand(COMMAND_HELLO);
 
@@ -159,34 +144,6 @@ class PatternController : public MessageReceiver {
 
   void update()
   {
-    for (uint8_t i=0; i < 5; i++) {
-      if (button[i].triggered()) {
-        this->onButton(i);
-      }
-    }
-
-    if (this->isMaster) {
-      double x = analogRead(X_AXIS_PIN)-512;
-      double y = analogRead(Y_AXIS_PIN)-512;
-      this->x_axis = int(x) >> 2;
-      this->y_axis = int(y) >> 2;
-      double deg = atan2(x,y);
-      if (deg < 0)
-        deg = 6.28+deg;
-      deg = (256.0/6.28) * deg;
-      this->joystick_angle = int(deg + 8) >> 4 << 4;
-      this->joystick_distance = sqrt16( x*x + y*y ) >> 4;
-//      Serial.print(x);
-//      Serial.print(" ");
-//      Serial.print(y);
-//      Serial.print(" ");
-//      Serial.println(this->joystick_distance);
-    } else {
-      this->x_axis = 128;
-      this->y_axis = 128;
-      this->joystick_angle = 0;
-    }
-
     this->read_keys();
 
     // If master has expired, clear masterId
@@ -223,6 +180,7 @@ class PatternController : public MessageReceiver {
       this->updateGraphics();
     }
 
+#ifdef USELCD
     if (this->lcd->active) {
       this->lcd->size(1);
       this->lcd->write(0,56, this->current_state.beat_frame);
@@ -232,6 +190,13 @@ class PatternController : public MessageReceiver {
 
       this->lcd->update();
     }
+#endif
+  }
+
+  void restart_phrase() {
+    this->beats->start_phrase();
+    this->update_beat();
+    this->send_update();
   }
 
   void update_beat() {
@@ -376,26 +341,6 @@ class PatternController : public MessageReceiver {
     }
     this->vstrips[this->next_vstrip]->load(background);
     this->next_vstrip = (this->next_vstrip + 1) % NUM_VSTRIPS; 
-  }
-
-  void onButton(uint8_t button) {
-    if (button == 0) {
-      this->setBrightness(sin8(this->joystick_angle));
-      return;
-    }
-    if (button == 1) {
-      this->beats->start_phrase();
-      this->update_beat();
-      this->send_update();
-      return;
-    }
-    if (button == 2) {
-      this->force_next();
-      return;
-    }
-    Serial.print(F("Button "));
-    Serial.println(button);
-    this->radio->sendCommand(COMMAND_FIREWORK, NULL, 0);
   }
 
   void optionsChanged() {

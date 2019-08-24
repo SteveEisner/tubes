@@ -24,10 +24,20 @@ class LEDs {
     FastLED.setMaxPowerInMilliWatts(5000);
     Serial.println(F("LEDs: ok"));
   }
+
+  void reverse() {
+    for (int i=1; i<8; i++) {
+      CRGB c = this->leds[i];
+      this->leds[i] = this->leds[16-i];
+      this->leds[16-i] = c;
+    }
+  }
   
-  void update() {
+  void update(bool reverse=false) {
     EVERY_N_MILLISECONDS( this->REFRESH_PERIOD ) {
       // Update the LEDs
+      if (reverse)
+        this->reverse();
       FastLED.show();
       this->fps++;
     }
