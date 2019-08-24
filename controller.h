@@ -344,7 +344,7 @@ class PatternController : public MessageReceiver {
   }
 
   void optionsChanged() {
-    if (this->radio->tubeId >= 250) {
+    if (this->isMaster) {
       this->radio->sendCommand(COMMAND_OPTIONS, &options, sizeof(options));
     }
   }
@@ -420,12 +420,12 @@ class PatternController : public MessageReceiver {
     
     switch (command) {
       case COMMAND_FIREWORK:
-        Serial.println(F("fireworks"));
+        Serial.print(F("fireworks"));
         this->acknowledge();
         return;
   
       case COMMAND_RESET:
-        Serial.println(F("reset"));
+        Serial.print(F("reset"));
         return;
   
       case COMMAND_BRIGHTNESS: {
@@ -435,41 +435,40 @@ class PatternController : public MessageReceiver {
       }
   
       case COMMAND_HELLO:
-        Serial.println(F("hello"));
+        Serial.print(F("hello"));
         this->updateTimer.stop();
         return;
   
       case COMMAND_OPTIONS: {
-        Serial.println(F("options"));
+        Serial.print(F("options"));
         memcpy(&this->options, data, sizeof(this->options));
-        this->acknowledge();
         return;
       }
 
       case COMMAND_NEXT: {
         Serial.print(F(" next "));
         if (fromId < this->radio->masterTubeId) {
-          Serial.println(F(" (ignoring)"));
+          Serial.print(F(" (ignoring)"));
           return;
         } 
 
         memcpy(&this->next_state, data, sizeof(TubeState));
         this->next_state.print();
-        Serial.println(F(" (obeying)"));
+        Serial.print(F(" (obeying)"));
         return;
       }
   
       case COMMAND_UPDATE: {
         Serial.print(F(" update "));
         if (fromId < this->radio->masterTubeId) {
-          Serial.println(F(" (ignoring)"));
+          Serial.print(F(" (ignoring)"));
           return;
         } 
 
         TubeState state;
         memcpy(&state, data, sizeof(TubeState));
         state.print();
-        Serial.println(F(" (obeying)"));
+        Serial.print(F(" (obeying)"));
   
         // Track the last time we received a message from our master
         this->slaveTimer.start(RADIO_SENDPERIOD * 8);
@@ -484,7 +483,7 @@ class PatternController : public MessageReceiver {
     }
   
     Serial.print(F("UNKNOWN "));
-    Serial.println(command, HEX);
+    Serial.print(command, HEX);
   }
 
   void read_keys() {
@@ -540,6 +539,7 @@ class PatternController : public MessageReceiver {
       case 'f':
         this->radio->sendCommandFrom(255, COMMAND_FIREWORK, NULL, 0);
         this->onCommand(0, COMMAND_FIREWORK, NULL);
+        Serial.println();
         break;
 
       case 'i':
@@ -626,6 +626,7 @@ class PatternController : public MessageReceiver {
       case 'h':
         // Pretend to receive a HELLO
         this->onCommand(0, COMMAND_HELLO, NULL);
+        Serial.println();
         return;
 
       case 'g':

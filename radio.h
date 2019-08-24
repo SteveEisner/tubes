@@ -228,12 +228,15 @@ class Radio {
       // Occcasionally relay commands - more frequently if higher ID
       uint8_t r = random8();
       if ((r % 3 == 0) && r < this->tubeId) {
-        Serial.print(F("Relaying from "));
-        Serial.println(this->tubeId);
+        Serial.print(F(" (relaying as "));
+        Serial.print(this->tubeId);
+        Serial.print(F(")"));
         message.relayId = message.tubeId;
         message.tubeId = this->tubeId;
         _radio.send(RADIO_TX_ID, &message, sizeof(message), NRFLite::NO_ACK);
       }
+      
+      Serial.println();
     }
 #endif
   }
