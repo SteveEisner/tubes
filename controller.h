@@ -47,6 +47,7 @@ class Button {
   void setup(uint8_t pin) {
     this->pin = pin;
     pinMode(pin, INPUT_PULLUP);
+    this->debounceTimer.start(0);
   }
 
   bool pressed() {
@@ -59,10 +60,11 @@ class Button {
   }
 
   bool triggered() {
+    // Triggers BOTH low->high AND high->low
     bool p = this->pressed();
     bool lp = this->lastPressed;
     this->lastPressed = p;
-    return p && (p != lp);
+    return p != lp;
   }
 };
 
@@ -195,6 +197,19 @@ class PatternController : public MessageReceiver {
 
   void restart_phrase() {
     this->beats->start_phrase();
+    this->update_beat();
+    this->send_update();
+  }
+
+  void set_phrase_position(uint8_t pos) {
+    this->beats->sync(this->beats->bpm, (this->beats->frac & -0xFFF) + (pos<<8));
+    this->update_beat();
+    this->send_update();
+  }
+  
+  void set_tapped_bpm(accum88 bpm, uint8_t pos=15) {
+    // By default, restarts at 15th beat - because this is the end of a tap
+    this->beats->sync(bpm, (this->beats->frac & -0xFFF) + (pos<<8));
     this->update_beat();
     this->send_update();
   }

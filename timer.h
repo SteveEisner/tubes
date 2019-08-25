@@ -34,23 +34,29 @@ GlobalTimer globalTimer;
 
 class Timer {
   public:
-    uint32_t endTime;
+    uint32_t markTime;
 
   void start(uint32_t duration_ms) {
-    this->endTime = globalTimer.now_millis + duration_ms;
+    this->markTime = globalTimer.now_millis + duration_ms;
   }
 
   void stop() {
     this->start(0);
   }
 
+  uint32_t since_mark() {
+    if (globalTimer.now_millis < this->markTime)
+      return 0;
+    return globalTimer.now_millis - this->markTime;
+  }
+
   void snooze(uint32_t duration_ms) {
-    while (this->endTime < globalTimer.now_millis)
-      this->endTime += duration_ms;
+    while (this->markTime < globalTimer.now_millis)
+      this->markTime += duration_ms;
   }
 
   bool ended() {
-    return globalTimer.now_millis > this->endTime;
+    return globalTimer.now_millis > this->markTime;
   }
 
   bool every(uint32_t duration_ms) {
