@@ -322,8 +322,12 @@ class PatternController : public MessageReceiver {
         this->current_state.effect_params.chance == tube_state.effect_params.chance)
       return;
 
-    this->current_state.effect_params = tube_state.effect_params;
     this->current_state.palette_id = tube_state.palette_id % gGradientPaletteCount;
+    this->_load_effect(tube_state.effect_params);
+  }
+
+  void _load_effect(EffectParameters params) {
+    this->current_state.effect_params = params;
   
     Serial.print(F("Change effect "));
     this->current_state.print();
