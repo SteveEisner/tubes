@@ -301,9 +301,13 @@ class PatternController : public MessageReceiver {
       return;
 
     this->current_state.palette_phrase = tube_state.palette_phrase;
-    this->current_state.palette_id = tube_state.palette_id % gGradientPaletteCount;
+    this->_load_palette(tube_state.palette_id);
+  }
 
-    Serial.print(F("Change palette "));
+  void _load_palette(uint8_t palette_id) {
+    this->current_state.palette_id = palette_id % gGradientPaletteCount;
+    
+    Serial.print(F("Change palette"));
     this->background_changed();
   }
 
