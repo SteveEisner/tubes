@@ -2133,12 +2133,13 @@ You are welcome to use this library for commercial purposes. For attribution, we
 </net>
 <net name="DAT" class="0">
 <segment>
-<pinref part="J3" gate="G$1" pin="1"/>
-<wire x1="-10.16" y1="73.66" x2="2.54" y2="73.66" width="0.1524" layer="91"/>
-<wire x1="2.54" y1="73.66" x2="2.54" y2="58.42" width="0.1524" layer="91"/>
-<pinref part="B1" gate="G$1" pin="VBAT"/>
-<wire x1="2.54" y1="58.42" x2="15.24" y2="58.42" width="0.1524" layer="91"/>
-<label x="-7.62" y="73.66" size="1.778" layer="95"/>
+<pinref part="B1" gate="G$1" pin="1/TX1"/>
+<wire x1="48.26" y1="83.82" x2="60.96" y2="83.82" width="0.1524" layer="91"/>
+<wire x1="60.96" y1="83.82" x2="60.96" y2="109.22" width="0.1524" layer="91"/>
+<wire x1="60.96" y1="109.22" x2="2.54" y2="109.22" width="0.1524" layer="91"/>
+<wire x1="2.54" y1="109.22" x2="2.54" y2="93.98" width="0.1524" layer="91"/>
+<pinref part="B1" gate="G$1" pin="A3/17"/>
+<wire x1="15.24" y1="93.98" x2="2.54" y2="93.98" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="CE" class="0">
@@ -2149,6 +2150,16 @@ You are welcome to use this library for commercial purposes. For attribution, we
 <pinref part="M1" gate="G$1" pin="CE"/>
 <wire x1="60.96" y1="30.48" x2="78.74" y2="30.48" width="0.1524" layer="91"/>
 <label x="71.12" y="30.48" size="1.778" layer="95"/>
+</segment>
+</net>
+<net name="N$1" class="0">
+<segment>
+<pinref part="B1" gate="G$1" pin="VBAT"/>
+<pinref part="J3" gate="G$1" pin="1"/>
+<wire x1="-10.16" y1="73.66" x2="2.54" y2="73.66" width="0.1524" layer="91"/>
+<wire x1="2.54" y1="73.66" x2="2.54" y2="58.42" width="0.1524" layer="91"/>
+<wire x1="2.54" y1="58.42" x2="15.24" y2="58.42" width="0.1524" layer="91"/>
+<label x="-7.62" y="73.66" size="1.778" layer="95"/>
 </segment>
 </net>
 </nets>
