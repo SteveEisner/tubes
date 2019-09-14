@@ -685,11 +685,11 @@ design rules under a new name.</description>
 <signal name="+3.3V">
 <contactref element="M1" pad="2"/>
 <contactref element="B1" pad="3.3V"/>
-<wire x1="15.24" y1="54.61" x2="15.24" y2="48.26" width="0.2032" layer="1"/>
-<wire x1="15.24" y1="48.26" x2="17.78" y2="45.72" width="0.2032" layer="1"/>
-<wire x1="17.78" y1="45.72" x2="34.29" y2="45.72" width="0.2032" layer="1"/>
-<wire x1="34.29" y1="45.72" x2="36.83" y2="48.26" width="0.2032" layer="1"/>
-<wire x1="36.83" y1="48.26" x2="36.83" y2="50.673" width="0.2032" layer="1"/>
+<wire x1="36.83" y1="50.673" x2="36.83" y2="48.26" width="0.1524" layer="1"/>
+<wire x1="36.83" y1="48.26" x2="31.75" y2="43.18" width="0.1524" layer="1"/>
+<wire x1="19.93763125" y1="43.18" x2="31.75" y2="43.18" width="0.1524" layer="1"/>
+<wire x1="15.24" y1="54.61" x2="15.24" y2="47.87763125" width="0.1524" layer="1"/>
+<wire x1="15.24" y1="47.87763125" x2="19.93763125" y2="43.18" width="0.1524" layer="1"/>
 </signal>
 <signal name="CS">
 <contactref element="B1" pad="10"/>
@@ -703,13 +703,15 @@ design rules under a new name.</description>
 <contactref element="M1" pad="5"/>
 <contactref element="B1" pad="13"/>
 <wire x1="5.08" y1="54.61" x2="16.51" y2="43.18" width="0.2032" layer="1"/>
-<wire x1="16.51" y1="43.18" x2="34.29" y2="43.18" width="0.2032" layer="1"/>
-<wire x1="38.1" y1="46.99" x2="34.29" y2="43.18" width="0.2032" layer="1"/>
+<wire x1="34.29" y1="43.18" x2="38.1" y2="46.99" width="0.2032" layer="1"/>
 <wire x1="31.75" y1="53.213" x2="31.75" y2="53.34" width="0.1524" layer="1"/>
 <wire x1="33.02" y1="54.61" x2="31.75" y2="53.34" width="0.2032" layer="1"/>
 <wire x1="38.1" y1="54.0282875" x2="38.1" y2="46.99" width="0.2032" layer="1"/>
 <wire x1="37.5182875" y1="54.61" x2="38.1" y2="54.0282875" width="0.2032" layer="1"/>
 <wire x1="33.02" y1="54.61" x2="37.5182875" y2="54.61" width="0.2032" layer="1"/>
+<wire x1="16.51" y1="43.18" x2="19.05" y2="40.64" width="0.1524" layer="1"/>
+<wire x1="19.05" y1="40.64" x2="31.75" y2="40.64" width="0.1524" layer="1"/>
+<wire x1="31.75" y1="40.64" x2="34.29" y2="43.18" width="0.1524" layer="1"/>
 </signal>
 <signal name="MOSI">
 <contactref element="M1" pad="6"/>
@@ -777,13 +779,24 @@ design rules under a new name.</description>
 <wire x1="35.56" y1="52.07" x2="34.417" y2="53.213" width="0.1524" layer="1"/>
 <wire x1="34.417" y1="53.213" x2="34.29" y2="53.213" width="0.1524" layer="1"/>
 </signal>
-<signal name="N$1">
+<signal name="LED_DAT">
 <contactref element="J3" pad="1"/>
 <contactref element="B1" pad="VBAT"/>
 <wire x1="17.78" y1="54.61" x2="17.78" y2="57.15" width="0.2032" layer="1"/>
 <wire x1="17.78" y1="57.15" x2="20.32" y2="59.69" width="0.2032" layer="1"/>
 <wire x1="20.32" y1="59.69" x2="33.02" y2="59.69" width="0.2032" layer="1"/>
 <wire x1="33.02" y1="59.69" x2="35.56" y2="62.23" width="0.2032" layer="1"/>
+</signal>
+<signal name="IRQ">
+<contactref element="M1" pad="8"/>
+<contactref element="B1" pad="8"/>
+<wire x1="29.21" y1="50.673" x2="20.82936875" y2="50.673" width="0.1524" layer="1"/>
+<wire x1="20.82936875" y1="50.673" x2="20.80396875" y2="50.6984" width="0.1524" layer="1"/>
+<wire x1="20.80396875" y1="50.6984" x2="19.83603125" y2="50.6984" width="0.1524" layer="1"/>
+<wire x1="19.83603125" y1="50.6984" x2="19.81063125" y2="50.673" width="0.1524" layer="1"/>
+<wire x1="20.32" y1="44.45" x2="18.415" y2="46.355" width="0.1524" layer="1"/>
+<wire x1="18.415" y1="46.355" x2="18.415" y2="49.27736875" width="0.1524" layer="1"/>
+<wire x1="18.415" y1="49.27736875" x2="19.81063125" y2="50.673" width="0.1524" layer="1"/>
 </signal>
 </signals>
 <mfgpreviewcolors>

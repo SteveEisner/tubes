@@ -2152,7 +2152,7 @@ You are welcome to use this library for commercial purposes. For attribution, we
 <label x="71.12" y="30.48" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="N$1" class="0">
+<net name="LED_DAT" class="0">
 <segment>
 <pinref part="B1" gate="G$1" pin="VBAT"/>
 <pinref part="J3" gate="G$1" pin="1"/>
@@ -2160,6 +2160,16 @@ You are welcome to use this library for commercial purposes. For attribution, we
 <wire x1="2.54" y1="73.66" x2="2.54" y2="58.42" width="0.1524" layer="91"/>
 <wire x1="2.54" y1="58.42" x2="15.24" y2="58.42" width="0.1524" layer="91"/>
 <label x="-7.62" y="73.66" size="1.778" layer="95"/>
+</segment>
+</net>
+<net name="IRQ" class="0">
+<segment>
+<pinref part="M1" gate="G$1" pin="IRQ"/>
+<wire x1="78.74" y1="17.78" x2="63.5" y2="17.78" width="0.1524" layer="91"/>
+<pinref part="B1" gate="G$1" pin="8/TX3"/>
+<wire x1="63.5" y1="17.78" x2="63.5" y2="66.04" width="0.1524" layer="91"/>
+<wire x1="63.5" y1="66.04" x2="48.26" y2="66.04" width="0.1524" layer="91"/>
+<label x="71.12" y="17.78" size="1.778" layer="95"/>
 </segment>
 </net>
 </nets>
