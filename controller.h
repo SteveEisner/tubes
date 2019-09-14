@@ -219,10 +219,10 @@ class PatternController : public MessageReceiver {
     this->current_state.beat_frame = particle_beat_frame = this->beats->frac;  // (particle_beat_frame is a hack)
     if (this->current_state.bpm >= 125>>8)
       this->energy = HighEnergy;
-    else if (this->current_state.bpm >= 122>>8)
+    else if (this->current_state.bpm > 120>>8)
       this->energy = MediumEnergy;
     else
-      this->energy = LowEnergy;    
+      this->energy = LowEnergy;
   }
   
   void send_update() {
@@ -338,7 +338,7 @@ class PatternController : public MessageReceiver {
 
   uint16_t set_next_effect(uint16_t phrase) {
     EffectDef def = gEffects[random8(gEffectCount)];
-    if (random8() < 200 || def.control.energy > this->energy)
+    if (def.control.energy > this->energy)
       def = gEffects[0];
 
     this->next_state.effect_params = def.params;
