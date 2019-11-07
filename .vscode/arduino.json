@@ -1,3 +1,4 @@
 {
-    "sketch": "Tubes.ino"
+    "sketch": "Tubes.ino",
+    "port": "/dev/cu.usbmodem61743101"
 }

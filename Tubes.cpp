@@ -1,3 +1,5 @@
+#define __ATMEGA__
+
 #include <Arduino.h>
 #include <array.h>
 #include <avr/pgmspace.h>
