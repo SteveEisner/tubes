@@ -43,7 +43,7 @@ class Master {
     this->button[2].setup(BUTTON_PIN_3);
     this->button[3].setup(BUTTON_PIN_4);
     this->button[4].setup(BUTTON_PIN_5);
-    Serial.println(F("Master: ok"));
+    Serial.println((char *)F("Master: ok"));
   }
 
   void update() {
@@ -114,7 +114,7 @@ class Master {
       return;
 
     if (button == 1) {
-      Serial.println(F("Skip >>"));
+      Serial.println((char *)F("Skip >>"));
       this->controller->force_next();
       this->ok();
       return;
@@ -125,7 +125,7 @@ class Master {
       return;
     }
 
-    Serial.print(F("Pressed "));
+    Serial.print((char *)F("Pressed "));
     Serial.println(button);
   }
 
@@ -143,7 +143,7 @@ class Master {
       return;
     }
 
-    Serial.print(F("Released "));
+    Serial.print((char *)F("Released "));
     Serial.println(button);
   }
 
@@ -188,7 +188,7 @@ class Master {
   }
 
   void tap() {
-    Serial.println(F("tap"));
+    Serial.println((char *)F("tap"));
     if (!this->taps) {
       // Joystick does a "push to BPM"
       if (this->joystick_active) {

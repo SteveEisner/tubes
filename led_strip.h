@@ -22,7 +22,7 @@ class LEDs {
     // tell FastLED about the LED strip configuration
     FastLED.addLeds<WS2812SERIAL,DATA_PIN,BRG>(this->leds, this->num_leds).setCorrection(TypicalLEDStrip);
     FastLED.setMaxPowerInMilliWatts(5000);
-    Serial.println(F("LEDs: ok"));
+    Serial.println((char *)F("LEDs: ok"));
   }
 
   void reverse() {
@@ -45,7 +45,7 @@ class LEDs {
     EVERY_N_MILLISECONDS( 1000 ) {
       if (this->fps < (FRAMES_PER_SECOND - 30)) {
         Serial.print(this->fps);
-        Serial.println(F(" fps!"));
+        Serial.println((char *)F(" fps!"));
       }
       this->fps = 0;
     }
