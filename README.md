@@ -1,27 +1,25 @@
 # tubes
-LED light tubes for Burning Man 2019
+These portable LED light poles make pretty lights for a dance party - and better yet:
 
-## LED tube parts
-Eagle files for PCB is in pcb/ and I used jlcpcb.com to print them - fast and cheap!
+They're **portable**! Convenient tripod bases keep them standing at attention, and a 10Ah USB battery (like the one you charge your phone with) will power them for about 8 hours.
 
-The tubes are like https://www.aliexpress.com/item/32678345729.html but frosted plastic like https://www.aliexpress.com/item/32977080489.html (note that this link is 12V LEDs). He custom made me some frosted 5V SK6812s.
+They're **versatile**! You can deploy them [in a wide open space at Burning Man](https://www.youtube.com/watch?v=O0XIgyneVw4) or right next to each other [in your living room](https://www.youtube.com/watch?v=syP49iw0Vn0).
 
-NRF with antenna: https://www.amazon.com/gp/product/B07PBBC4H9 / without antenna: https://www.amazon.com/gp/product/B00O9O868G
-(either one will work on the PCB but the one with an antenna will stick out over the edge)
+They're **coordinated**! If you put them next to each other, they sync using near-field radio. And they'll even daisy-chain, meaning the furthest ones can be really far apart as long as there are some in the middle to relay the signal.
 
-Terminal blocks: https://www.amazon.com/gp/product/B01MT4LC0F
+![IMG_1521](assembly/poles_in_use.jpg)
 
-## tripod base hardware
-Tripods: https://www.amazon.com/gp/product/B072JW7PWX
 
-Double-sided foam stickies sized to the PCB: https://www.amazon.com/gp/product/B07NYR181P
 
-Cups I used for the base: https://www.amazon.com/gp/product/B07RYRF67N
+They're also **in progress** with lots of things that could be improved.  But for now:
 
-Shower rings I used for the top: https://www.amazon.com/gp/product/B07K6D7D4F
+* they play patterns from an expanding set of "genetically-driven" combinations
+* they stay in sync or deliberately drift from each other in pleasing ways
+* they operate internally at a certain BPM - allowing them to sync to music
 
-Tripod adapters to reinforce bottom: https://www.amazon.com/gp/product/B00H6P57O6
 
-3/8" flange nuts: https://www.amazon.com/gp/product/B07MJVXWPR
 
-Weighted bases: https://www.amazon.com/gp/product/B00PCS196E
+## Want your own?
+
+They're not for sale. But see the build instructions in [this directory](assembly), complete with a parts list & assembly instructions. I'd love to help you build your own!
+
