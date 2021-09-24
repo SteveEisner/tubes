@@ -21,7 +21,7 @@ Eagle files for printing your own PCB are in the [pcb](../pcb) directory.  I use
 
 The tubes are "meteor lights" like [these ones](https://www.aliexpress.com/item/32678345729.html) but use the frosted plastic like [these ones](https://www.aliexpress.com/item/32977080489.html ) (note that this link is 12V LEDs, don't get those!). Ray Wu's store is universally trusted by LED artists and they do custom orders - they made me some **frosted 2m 5V 30/m SK6812s**. The great thing about these lights is that they're double-sided, for much better 360-degree view of the lights. Each "LED" in the strip is actually a front-and-back pair.
 
-If you want to change the LEDs, for instance to use a different chipset or more LEDS per meter, it'll mostly scales to any size, but you'll need to make small updates the source. You also risk increasing the power consumption.
+If you want to change the LEDs, for instance to use a different chipset or more LEDS per meter, it'll mostly scale to any size, but you'll need to make small updates the source. You also risk increasing the power consumption.
 
 The code is written for a [Teensy LC](https://www.pjrc.com/teensy/teensyLC.html) microprocessor. It's a cheap, powerful CPU with some nice features for LED applications. You'll need the [Arduino](https://www.arduino.cc/) development environment to flash the code, and I recommend [VSCode](https://code.visualstudio.com/) + [PlatformIO](https://platformio.org/) for editing.
 
@@ -98,7 +98,7 @@ The day before leaving for Burning Man, I made myself a new toy.
 
 The tubes normally work really well and sync automatically. But their range is limited by the fact that the NRF chips don't have a very big antenna. Occasionally they'll even be right next to each other and still not see each other, in which case one or two might drift apart from the rest.
 
-To achieve perfect coordination, I built a hand-held controller which has the same PCB, butthis time I used an [NRF with a big antenna](https://www.amazon.com/gp/product/B07PBBC4H9). It has a special ID that the tubes will always obey, so it acts as a dictator with special powers. It gets them all in sync even if they're 50+ feet apart. And while I was building it, I added some UI to force them to change patterns, colors, and tempo.
+To achieve perfect coordination, I built a hand-held controller which has the same PCB, but this time I used an [NRF with a big antenna](https://www.amazon.com/gp/product/B07PBBC4H9). It has a special ID that the tubes will always obey, so it acts as a dictator with special powers. It gets them all in sync even if they're 50+ feet apart. And while I was building it, I added some UI to force them to change patterns, colors, and tempo.
 
 It's super useful and also the ugliest thing I've ever built.
 

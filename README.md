@@ -3,7 +3,7 @@ These portable LED light poles make pretty lights for a dance party - and better
 
 They're **portable**! Convenient tripod bases keep them standing at attention, and a 10Ah USB battery (like the one you charge your phone with) will power them for about 8 hours.
 
-They're **versatile**! You can deploy them in a [wide open space at Burning Man](https://youtu.be/UtXL0ScNUoE), in a [private event space](https://youtu.be/4YlAoL8A3Lg), or right next to each other [in your living room](https://youtu.be/UmiRBCOAMBg).  (Click into these links for videos of them in action.)
+They're **versatile**! You can deploy them in a [wide open space at Burning Man](https://youtu.be/UtXL0ScNUoE), in a [private event space](https://youtu.be/B6OBde7zRN4), or right next to each other [in your living room](https://youtu.be/UmiRBCOAMBg).  (Click into these links for videos of them in action.)
 
 They're **coordinated**! If you put them next to each other, they sync using near-field radio. And they'll even daisy-chain, meaning the furthest ones can be really far apart as long as there are some in the middle to relay the signal.
 
