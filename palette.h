@@ -1,5 +1,4 @@
-#ifndef PALETTES_H
-#define PALETTES_H
+#pragma once
 
 // Gradient palette "ib_jul01_gp", originally from
 // http://soliton.vm.bytemark.co.uk/pub/cpt-city/ing/xmas/tn/ib_jul01.png.index.html
@@ -2071,5 +2070,3 @@ static const TProgmemRGBGradientPalettePtr gPalettes[] PROGMEM = {
   janico_22_gp,
 };
 const uint8_t gGradientPaletteCount = ARRAY_SIZE(gPalettes);
-
-#endif

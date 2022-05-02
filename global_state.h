@@ -1,5 +1,4 @@
-#ifndef GLOBAL_STATE_H
-#define GLOBAL_STATE_H
+#pragma once
 
 
 class TubeState {
@@ -49,5 +48,3 @@ class TubeState {
   }
 
 };
-
-#endif

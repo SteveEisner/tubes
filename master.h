@@ -1,5 +1,4 @@
-#ifndef MASTER_H
-#define MASTER_H
+#pragma once
 
 #include "timer.h"
 #include "controller.h"
@@ -261,4 +260,3 @@ class Master {
 
 };
 
-#endif

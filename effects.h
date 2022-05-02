@@ -1,5 +1,4 @@
-#ifndef EFFECTS_H
-#define EFFECTS_H
+#pragma once
 
 #include "particle.h"
 #include "virtual_strip.h"
@@ -213,5 +212,3 @@ static const EffectDef gEffects[] STATIC_MEM = {
 };
 const uint8_t gEffectCount = ARRAY_SIZE(gEffects);
 
-
-#endif

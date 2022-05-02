@@ -1,5 +1,4 @@
-#ifndef PATTERNS_H
-#define PATTERNS_H
+#pragma once
 
 #include "palette.h"
 #include "virtual_strip.h"
@@ -187,5 +186,3 @@ PatternDef gPatterns[] = {
 /*
 */
 const uint8_t gPatternCount = ARRAY_SIZE(gPatterns);
-
-#endif

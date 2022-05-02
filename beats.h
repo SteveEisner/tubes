@@ -1,5 +1,4 @@
-#ifndef BEATS_H
-#define BEATS_H
+#pragma once
 
 #include "timer.h"
 
@@ -71,5 +70,3 @@ class BeatController {
   }
 
 };
-
-#endif

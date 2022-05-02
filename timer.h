@@ -1,5 +1,4 @@
-#ifndef TIMER_H
-#define TIMER_H
+#pragma once
 
 class GlobalTimer {
   public:
@@ -66,5 +65,3 @@ class Timer {
     return 1;
   }
 };
-
-#endif

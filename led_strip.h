@@ -1,5 +1,4 @@
-#ifndef LED_STRIP_H
-#define LED_STRIP_H
+#pragma once
 
 #define MAX_LEDS    64
 #define MAX_VIRTUAL_LEDS   (2*MAX_LEDS+1)
@@ -64,5 +63,3 @@ class LEDs {
     }
   }
 };
-
-#endif

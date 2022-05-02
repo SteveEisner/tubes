@@ -1,5 +1,4 @@
-#ifndef OPTIONS_H
-#define OPTIONS_H
+#pragma once
 
 typedef enum SyncMode {
   All=0,
@@ -82,6 +81,3 @@ class EffectParameters {
     this->chance=chance;
   };
 };
-
-
-#endif

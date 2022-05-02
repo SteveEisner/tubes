@@ -1,5 +1,5 @@
-#ifndef FASTLED_CONFIG_H
-#define FASTLED_CONFIG_H
+#pragma once
+
 
 #ifdef IS_TEENSY
 #define FASTLED_ARM
@@ -79,5 +79,3 @@ uint8_t scaled16to8( uint16_t v, uint16_t lowest=0, uint16_t highest=65535) {
   uint16_t result = lowest + scaledbeat;
   return result;
 }
-
-#endif

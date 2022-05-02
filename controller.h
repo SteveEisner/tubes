@@ -1,5 +1,4 @@
-#ifndef CONTROLLER_H
-#define CONTROLLER_H
+#pragma once
 
 #include "beats.h"
 
@@ -692,6 +691,3 @@ class PatternController : public MessageReceiver {
 // What's interesting?
 // c53 - clouds
 // m4 - swing drift
-
-
-#endif

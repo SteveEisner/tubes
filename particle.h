@@ -1,5 +1,4 @@
-#ifndef PARTICLE_H
-#define PARTICLE_H
+#pragma once
 
 #define MAX_PARTICLES 20
 #undef PARTICLE_PALETTES
@@ -218,5 +217,3 @@ void drawBeatbox(Particle *particle, CRGB strip[], uint8_t num_leds) {
   drawRadius(particle, strip, num_leds, pos, radius, c, false);
 }
 
-
-#endif
