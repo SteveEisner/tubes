@@ -1,7 +1,7 @@
 #define __ATMEGA__
 
 #include <Arduino.h>
-#include <array.h>
+#include <ustd_array.h>
 #include <avr/pgmspace.h>
 #include "util.h"
 

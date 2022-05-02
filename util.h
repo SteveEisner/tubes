@@ -2,6 +2,8 @@
 #define UTIL_H
 
 #define ARRAY_SIZE(A) (sizeof(A) / sizeof((A)[0]))
+
+#ifndef USTD_FEATURE_FREE_MEMORY
 // ===== START freeMemory
 #ifdef __arm__
 // should use uinstd.h to define sbrk but Due causes a conflict
@@ -21,5 +23,6 @@ int freeMemory() {
 #endif  // __arm__
 }
 // ===== END freeMemory
+#endif
 
 #endif
