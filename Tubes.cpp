@@ -1,9 +1,4 @@
-#include <Arduino.h>
-#include "fastled_config.h"
-
-#include <ustd_array.h>
-#include "util.h"
-
+#include "platform_config.h"
 #include "options.h"
 
 // #define MASTERCONTROL
