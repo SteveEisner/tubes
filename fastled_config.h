@@ -1,11 +1,5 @@
 #pragma once
 
-
-#ifdef IS_TEENSY
-#define FASTLED_ARM
-#define FASTLED_ARM_M0_PLUS
-#endif
-
 // ================
 // Teensy LC
 // ================
@@ -13,6 +7,7 @@
 #define FASTLED_TEENSYLC
 #define IS_TEENSY
 #define STATIC_MEM PROGMEM
+#define __ATMEGA__
 
 // Default to using PROGMEM since TEENSYLC provides it
 // even though all it does is ignore it.
@@ -26,6 +21,7 @@
 #elif defined(__arm__) && defined(TEENSYDUINO) && defined(KINETISK)
 #define FASTLED_TEENSY3
 #define IS_TEENSY
+#define __ATMEGA__
 
 // ================
 // Teensy 4.X
@@ -33,6 +29,7 @@
 #elif defined(__arm__) && defined(TEENSYDUINO) && (defined(__IMXRT1052__) || defined(__IMXRT1062__))
 #define FASTLED_TEENSY4
 #define IS_TEENSY
+#define __ATMEGA__
 
 #endif
 
@@ -41,7 +38,10 @@
 #define STATIC_MEM
 #endif
 
-
+#ifdef IS_TEENSY
+#define FASTLED_ARM
+#define FASTLED_ARM_M0_PLUS
+#endif
 
 #define FASTLED_INTERNAL  # turn off pragmas
 

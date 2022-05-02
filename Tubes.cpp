@@ -1,17 +1,19 @@
-#define __ATMEGA__
-
 #include <Arduino.h>
+#include "fastled_config.h"
+
 #include <ustd_array.h>
 #include "util.h"
 
-#include "fastled_config.h"
 #include "options.h"
 
 // #define MASTERCONTROL
 
 #define MASTER_PIN 6
 #define NUM_LEDS 64
+
+#ifdef IS_TEENSY
 #define USERADIO
+#endif
 
 #include "beats.h"
 #include "virtual_strip.h"
