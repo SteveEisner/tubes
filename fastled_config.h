@@ -12,6 +12,7 @@
 #if defined(__arm__) && defined(TEENSYDUINO) && defined(KINETISL)
 #define FASTLED_TEENSYLC
 #define IS_TEENSY
+#define STATIC_MEM PROGMEM
 
 // Default to using PROGMEM since TEENSYLC provides it
 // even though all it does is ignore it.
@@ -33,6 +34,11 @@
 #define FASTLED_TEENSY4
 #define IS_TEENSY
 
+#endif
+
+// Only try to use PROGMEM on Teensy LCs
+#ifndef STATIC_MEM
+#define STATIC_MEM
 #endif
 
 

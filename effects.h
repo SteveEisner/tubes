@@ -189,7 +189,7 @@ typedef struct {
 } EffectDef;
 
 
-static const EffectDef gEffects[] PROGMEM = {
+static const EffectDef gEffects[] STATIC_MEM = {
   {{None}, {LongDuration}},
   {{Flash, Brighten, Beat, 40}, {MediumDuration, MediumEnergy}},
   {{Flash, Darken, TwoBeats, 40}, {MediumDuration, MediumEnergy}},

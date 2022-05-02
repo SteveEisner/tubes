@@ -23,8 +23,15 @@ typedef enum Energy: uint8_t {
 } Energy;
 
 typedef struct ControlParameters {
-  Duration duration=MediumDuration;
-  Energy energy=LowEnergy;
+  public:
+    Duration duration=MediumDuration;
+    Energy energy=LowEnergy;
+
+  ControlParameters(Duration duration=MediumDuration, Energy energy=LowEnergy) {
+    this->duration=duration;
+    this->energy=energy;
+  };
+
 } ControlParams;
 
 typedef enum PenMode: uint8_t {
@@ -61,12 +68,20 @@ typedef enum BeatPulse: uint8_t {
   Phrase=128,
 } BeatPulse;
 
-typedef struct {
-  EffectMode effect;
-  PenMode pen=Draw;
-  BeatPulse beat=Beat;
-  uint8_t chance=255;
-} EffectParameters;
+class EffectParameters {
+  public:
+    EffectMode effect;
+    PenMode pen=Draw;
+    BeatPulse beat=Beat;
+    uint8_t chance=255;
+
+  EffectParameters(EffectMode effect=None, PenMode pen=Draw, BeatPulse beat=Beat, uint8_t chance=255) {
+    this->effect=effect;
+    this->pen=pen;
+    this->beat=beat;
+    this->chance=chance;
+  };
+};
 
 
 #endif
