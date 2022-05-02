@@ -1,9 +1,43 @@
 #ifndef FASTLED_CONFIG_H
 #define FASTLED_CONFIG_H
 
-#define FASTLED_TEENSYLC
+#ifdef IS_TEENSY
 #define FASTLED_ARM
 #define FASTLED_ARM_M0_PLUS
+#endif
+
+// ================
+// Teensy LC
+// ================
+#if defined(__arm__) && defined(TEENSYDUINO) && defined(KINETISL)
+#define FASTLED_TEENSYLC
+#define IS_TEENSY
+
+// Default to using PROGMEM since TEENSYLC provides it
+// even though all it does is ignore it.
+#ifndef FASTLED_USE_PROGMEM
+#define FASTLED_USE_PROGMEM 1
+#endif
+
+// ================
+// Teensy 3.X
+// ================
+#elif defined(__arm__) && defined(TEENSYDUINO) && defined(KINETISK)
+#define FASTLED_TEENSY3
+#define IS_TEENSY
+
+// ================
+// Teensy 4.X
+// ================
+#elif defined(__arm__) && defined(TEENSYDUINO) && (defined(__IMXRT1052__) || defined(__IMXRT1062__))
+#define FASTLED_TEENSY4
+#define IS_TEENSY
+
+#endif
+
+
+
+#define FASTLED_INTERNAL  # turn off pragmas
 
 #ifndef INTERRUPT_THRESHOLD
 #define INTERRUPT_THRESHOLD 1
@@ -20,15 +54,11 @@
 #define FASTLED_ACCURATE_CLOCK
 #endif
 
-// Default to using PROGMEM since TEENSYLC provides it
-// even though all it does is ignore it.  Just being
-// conservative here in case TEENSYLC changes.
-#ifndef FASTLED_USE_PROGMEM
-#define FASTLED_USE_PROGMEM 1
-#endif
-
+#ifdef IS_TEENSY
 #include <WS2812Serial.h>
 #define USE_WS2812SERIAL
+#endif
+
 #include <FastLED.h>
 
 FASTLED_USING_NAMESPACE

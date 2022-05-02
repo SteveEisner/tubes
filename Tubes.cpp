@@ -2,7 +2,6 @@
 
 #include <Arduino.h>
 #include <ustd_array.h>
-#include <avr/pgmspace.h>
 #include "util.h"
 
 #include "fastled_config.h"
