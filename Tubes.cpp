@@ -6,9 +6,7 @@
 #define MASTER_PIN 6
 #define NUM_LEDS 64
 
-#ifdef IS_TEENSY
 #define USERADIO
-#endif
 
 #include "beats.h"
 #include "virtual_strip.h"

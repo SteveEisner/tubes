@@ -99,9 +99,11 @@ class Radio {
       this->resetId();
   
 #ifdef USERADIO
+#ifdef IS_TEENSY
     SPI.setSCK(PIN_RADIO_SCK);
     SPI.setMOSI(PIN_RADIO_MOSI);
     SPI.setMISO(PIN_RADIO_MISO);
+#endif
     SPI.begin();
     
     this->reported_no_radio = false;
